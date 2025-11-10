@@ -1,0 +1,36 @@
+﻿
+@{
+    ViewBag.Title = "TestConnectionDB";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+@{
+    ViewBag.Title = "登录";
+}
+
+<h2>TestConnectionDB</h2>
+
+@if (ViewBag.ConnectionResult != null)
+{
+    <div class="alert @(ViewBag.ConnectionResult.ToString().Contains("成功") ? "alert-success" : "alert-danger")">
+        @ViewBag.ConnectionResult
+    </div>
+}
+
+<!-- 登录表单 -->
+@using (Html.BeginForm("Login", "Home", FormMethod.Post))
+{
+    <div class="form-group">
+        <label>用户名:</label>
+        @Html.TextBox("username", null, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        <label>密码:</label>
+        @Html.Password("password", null, new { @class = "form-control" })
+    </div>
+
+    <button type="submit" class="btn btn-primary">登录</button>
+}
