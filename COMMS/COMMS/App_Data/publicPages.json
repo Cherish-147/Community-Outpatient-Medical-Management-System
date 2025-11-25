@@ -1,0 +1,4 @@
+﻿{
+  "Home": [ "Login", "Index", "About", "Contact", "UserRegister" ],
+  "Admin":["Help","Info"]
+}

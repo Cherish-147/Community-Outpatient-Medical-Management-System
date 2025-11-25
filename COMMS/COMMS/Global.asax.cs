@@ -25,6 +25,7 @@ namespace COMMS
             }
             //log4net
             log4net.Config.XmlConfigurator.Configure();
+            //FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
 
         }
     }
