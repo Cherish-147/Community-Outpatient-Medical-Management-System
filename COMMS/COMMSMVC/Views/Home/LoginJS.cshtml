@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"]="Login";
+}
+<h2>Login</h2>
+<div>
+<label>Username:</label><input id-"username" type-"text" />
+</div>
+ <div>
+<label>Password:</label><input id-"password" type-"password" />
+</div>
+<button onclick-"login()">Login</button>
+<p id-"result" style-"margin-top:20px;"></p>
+<script>
+        async function login(){const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const response = await fetch('https://localhost:44363/api/Home/Login',
+        method: 'PosT',headers:{
+        'Content-Type':'application/json'
+        body:JSON.stringify({Username: username, Password: password })
+    })5
+const resultElement = document.getElementById("result");
+if(response.ok){
+const data =await response.json();resultElement.style.color ="green";+ data.token;resultElement.innerText="JNT Token:} else {
+const error=await response.json();resultElement.style.color ="red";resultElement.innerText="Error:"+ error.message;}}
