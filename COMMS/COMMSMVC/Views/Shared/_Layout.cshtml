@@ -48,8 +48,8 @@
                     <span class="text-success me-3">
                         <i class="bi bi-person"></i> @Context.Session.GetString("Username")
                     </span>
-                    <a class="nav-link text-secondary me-2" asp-controller="User" asp-action="Index">
-                        <i class="bi bi-person-circle"></i> 个人中心
+                    <a class="nav-link text-secondary me-2" asp-controller="Patient" asp-action="PatientIndex">
+                        <i class="bi bi-person-circle"></i> 患者中心
                     </a>
                     <a class="nav-link text-danger" asp-controller="Home" asp-action="Logout">
                         <i class="bi bi-box-arrow-right"></i> 退出
@@ -66,112 +66,145 @@
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Index" && ViewContext.RouteData.Values["Controller"].ToString() == "Home" ? "active" : "")"
                    asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-house-door me-2"></i> 首页
+                    <i class="bi bi-house-door me-2"></i> 系统首页
                 </a>
             </li>
 
-            <!-- 已登录用户显示业务菜单 -->
+            <!-- 已登录用户显示对应菜单 -->
             @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && !string.IsNullOrEmpty(Context.Session.GetString("UserID")))
             {
-                <!-- 挂号管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Registration" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#registrationMenu" aria-expanded="false">
-                        <i class="bi bi-journal-medical me-2"></i> 挂号管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Registration" ? "show" : "")" id="registrationMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Registration" asp-action="Index">挂号列表</a></li>
-                            <li><a class="dropdown-item" asp-controller="Registration" asp-action="Create">新增挂号</a></li>
-                            <li><a class="dropdown-item" asp-controller="Registration" asp-action="Statistics">挂号统计</a></li>
-                        </ul>
-                    </div>
-                </li>
+                <!-- 判断用户角色：患者（可根据实际角色字段调整，示例用UserType区分） -->
+                @if (Context.Session.GetString("UserType") == "Patient")
+                {
+                    <!-- 患者专属菜单 -->
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "PatientIndex" && ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "active" : "")"
+                           asp-controller="Patient" asp-action="PatientIndex">
+                            <i class="bi bi-person-heart me-2"></i> 患者中心
+                        </a>
+                    </li>
 
-                <!-- 新增：患者管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#patientMenu" aria-expanded="false">
-                        <i class="bi bi-person-heart me-2"></i> 患者管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "show" : "")" id="patientMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Patient" asp-action="Index">患者列表</a></li>
-                            <li><a class="dropdown-item" asp-controller="Patient" asp-action="Create">新增患者</a></li>
-                            <li><a class="dropdown-item" asp-controller="Patient" asp-action="MedicalRecord">病历档案</a></li>
-                            <li><a class="dropdown-item" asp-controller="Patient" asp-action="FollowUp">随访记录</a></li>
-                        </ul>
-                    </div>
-                </li>
+                    <!-- 患者核心功能菜单 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#patientFunctionMenu" aria-expanded="false">
+                            <i class="bi bi-clipboard2-check me-2"></i> 我的就医
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "show" : "")" id="patientFunctionMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "RegisterAppointment" ? "active" : "")" asp-controller="Patient" asp-action="RegisterAppointment">预约挂号</a></li>
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "MyRecords" ? "active" : "")" asp-controller="Patient" asp-action="MyRecords">我的病历</a></li>
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "MyPrescriptions" ? "active" : "")" asp-controller="Patient" asp-action="MyPrescriptions">我的处方</a></li>
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "MyPayments" ? "active" : "")" asp-controller="Patient" asp-action="MyPayments">缴费记录</a></li>
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "active" : "")" asp-controller="Patient" asp-action="EditProfile">个人信息</a></li>
+                                <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"].ToString() == "BookDoctor" ? "active" : "")" asp-controller="Patient" asp-action="BookDoctor">常用医生</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                }
+                else
+                {
+                    <!-- 管理员/医护人员菜单（原有菜单保留） -->
+                    <!-- 挂号管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Registration" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#registrationMenu" aria-expanded="false">
+                            <i class="bi bi-journal-medical me-2"></i> 挂号管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Registration" ? "show" : "")" id="registrationMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Registration" asp-action="Index">挂号列表</a></li>
+                                <li><a class="dropdown-item" asp-controller="Registration" asp-action="Create">新增挂号</a></li>
+                                <li><a class="dropdown-item" asp-controller="Registration" asp-action="Statistics">挂号统计</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <!-- 医生管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#doctorMenu" aria-expanded="false">
-                        <i class="bi bi-person-badge me-2"></i> 医生管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "show" : "")" id="doctorMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Index">医生列表</a></li>
-                            <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Create">新增医生</a></li>
-                            <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Schedule">出诊安排</a></li>
-                        </ul>
-                    </div>
-                </li>
+                    <!-- 患者管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#patientMenu" aria-expanded="false">
+                            <i class="bi bi-person-heart me-2"></i> 患者管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "show" : "")" id="patientMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Patient" asp-action="Index">患者列表</a></li>
+                                <li><a class="dropdown-item" asp-controller="Patient" asp-action="Create">新增患者</a></li>
+                                <li><a class="dropdown-item" asp-controller="Patient" asp-action="MedicalRecord">病历档案</a></li>
+                                <li><a class="dropdown-item" asp-controller="Patient" asp-action="FollowUp">随访记录</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <!-- 药品管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#medicineMenu" aria-expanded="false">
-                        <i class="bi bi-pills me-2"></i> 药品管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "show" : "")" id="medicineMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Index">药品库存</a></li>
-                            <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Purchase">药品采购</a></li>
-                            <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Expiry">效期提醒</a></li>
-                        </ul>
-                    </div>
-                </li>
+                    <!-- 医生管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#doctorMenu" aria-expanded="false">
+                            <i class="bi bi-person-badge me-2"></i> 医生管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "show" : "")" id="doctorMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Index">医生列表</a></li>
+                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Create">新增医生</a></li>
+                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Schedule">出诊安排</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <!-- 收费管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#paymentMenu" aria-expanded="false">
-                        <i class="bi bi-cash-stack me-2"></i> 收费管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "show" : "")" id="paymentMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Payment" asp-action="Index">收费记录</a></li>
-                            <li><a class="dropdown-item" asp-controller="Payment" asp-action="Create">新增收费</a></li>
-                            <li><a class="dropdown-item" asp-controller="Payment" asp-action="Refund">退费处理</a></li>
-                        </ul>
-                    </div>
-                </li>
+                    <!-- 药品管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#medicineMenu" aria-expanded="false">
+                            <i class="bi bi-pills me-2"></i> 药品管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "show" : "")" id="medicineMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Index">药品库存</a></li>
+                                <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Purchase">药品采购</a></li>
+                                <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Expiry">效期提醒</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <!-- 系统管理 -->
-                <li class="nav-item">
-                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "active" : "")"
-                       href="#" role="button" data-bs-toggle="collapse" data-bs-target="#systemMenu" aria-expanded="false">
-                        <i class="bi bi-gear me-2"></i> 系统管理
-                    </a>
-                    <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "show" : "")" id="systemMenu">
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="System" asp-action="UserManagement">用户管理</a></li>
-                            <li><a class="dropdown-item" asp-controller="System" asp-action="RoleManagement">角色权限</a></li>
-                            <li><a class="dropdown-item" asp-controller="System" asp-action="Parameter">系统参数</a></li>
-                            <li><a class="dropdown-item" asp-controller="System" asp-action="Log">操作日志</a></li>
-                        </ul>
-                    </div>
-                </li>
+                    <!-- 收费管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#paymentMenu" aria-expanded="false">
+                            <i class="bi bi-cash-stack me-2"></i> 收费管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "show" : "")" id="paymentMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Payment" asp-action="Index">收费记录</a></li>
+                                <li><a class="dropdown-item" asp-controller="Payment" asp-action="Create">新增收费</a></li>
+                                <li><a class="dropdown-item" asp-controller="Payment" asp-action="Refund">退费处理</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <!-- 数据统计 -->
-                <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "active" : "")"
-                       asp-controller="Statistics" asp-action="Index">
-                        <i class="bi bi-bar-chart me-2"></i> 数据统计
-                    </a>
-                </li>
+                    <!-- 系统管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#systemMenu" aria-expanded="false">
+                            <i class="bi bi-gear me-2"></i> 系统管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "show" : "")" id="systemMenu">
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="System" asp-action="UserManagement">用户管理</a></li>
+                                <li><a class="dropdown-item" asp-controller="System" asp-action="RoleManagement">角色权限</a></li>
+                                <li><a class="dropdown-item" asp-controller="System" asp-action="Parameter">系统参数</a></li>
+                                <li><a class="dropdown-item" asp-controller="System" asp-action="Log">操作日志</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- 数据统计 -->
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "active" : "")"
+                           asp-controller="Statistics" asp-action="Index">
+                            <i class="bi bi-bar-chart me-2"></i> 数据统计
+                        </a>
+                    </li>
+                }
             }
 
             <!-- 公共菜单：隐私政策 -->
