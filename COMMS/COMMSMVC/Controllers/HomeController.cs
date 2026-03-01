@@ -21,6 +21,9 @@ namespace COMMSMVC.Controllers
 
         public IActionResult Index()
         {
+            // 从数据库查询今日挂号数
+            //ViewData["TodayRegistrationCount"] = _registrationService.GetTodayCount();
+            // 其他数据查询...
             return View();
         }
 
