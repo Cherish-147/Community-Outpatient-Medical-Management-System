@@ -12,3 +12,5 @@
 /COMMS/COMMSMVC
 /COMMS/COMMSWebAPI
 /COMMS/.vs
+*.wsuo
+*.json
