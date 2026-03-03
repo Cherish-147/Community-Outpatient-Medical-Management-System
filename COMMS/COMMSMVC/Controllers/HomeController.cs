@@ -78,5 +78,20 @@ namespace COMMSMVC.Controllers
             ViewBag.Error = "用户名或密码错误";
             return View(model);
         }
+      
+        public IActionResult Logout()
+        {
+            // 1. 清空所有用户相关的Session数据（关键）
+            HttpContext.Session.Remove("JwtToken");
+            HttpContext.Session.Remove("UserID");
+            HttpContext.Session.Remove("Username");
+            HttpContext.Session.Remove("Role");
+
+            // 可选：清空所有Session（如果不需要保留其他Session数据）
+             HttpContext.Session.Clear();
+
+            // 2. 跳转到登录页（可根据需求调整跳转目标）
+            return RedirectToAction("Login", "Home");
+        }
     }
 }

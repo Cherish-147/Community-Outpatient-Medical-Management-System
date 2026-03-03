@@ -74,7 +74,7 @@
             @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && !string.IsNullOrEmpty(Context.Session.GetString("UserID")))
             {
                 <!-- 判断用户角色：患者（可根据实际角色字段调整，示例用UserType区分） -->
-                @if (Context.Session.GetString("UserType") == "Patient")
+                @if (Context.Session.GetString("Role") == "Patient")
                 {
                     <!-- 患者专属菜单 -->
                     <li class="nav-item">
