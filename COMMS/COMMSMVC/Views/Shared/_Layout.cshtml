@@ -137,16 +137,37 @@
                     </li>
 
                     <!-- 医生管理 -->
+                    <!-- 医生管理下拉菜单（优化版） -->
                     <li class="nav-item">
+                        <!-- 主菜单：判断Controller为Doctor时激活，且子菜单展开 -->
                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "active" : "")"
-                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#doctorMenu" aria-expanded="false">
+                           href="#" role="button" data-bs-toggle="collapse"
+                           data-bs-target="#doctorMenu"
+                           aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "true" : "false")">
                             <i class="bi bi-person-badge me-2"></i> 医生管理
                         </a>
+                        <!-- 子菜单：Controller为Doctor时自动展开，且当前Action高亮 -->
                         <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Doctor" ? "show" : "")" id="doctorMenu">
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Index">医生列表</a></li>
-                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Create">新增医生</a></li>
-                                <li><a class="dropdown-item" asp-controller="Doctor" asp-action="Schedule">出诊安排</a></li>
+                            <ul class="list-unstyled ps-3">
+                                <!-- 替换dropdown-menu为更适配侧边栏的样式 -->
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                       asp-controller="Doctor" asp-action="Index">
+                                        <i class="bi bi-list-ul me-2"></i> 医生列表
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active fw-bold" : "")"
+                                       asp-controller="Doctor" asp-action="Create">
+                                        <i class="bi bi-plus-circle me-2"></i> 新增医生
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Schedule" ? "active fw-bold" : "")"
+                                       asp-controller="Doctor" asp-action="Schedule">
+                                        <i class="bi bi-calendar-week me-2"></i> 出诊安排
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </li>
