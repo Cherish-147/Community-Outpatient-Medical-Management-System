@@ -278,10 +278,246 @@ namespace COMMSMVC.Controllers
                 }
                 return dt;
             }
+        // 新增：排班模型类（放在DoctorController同级）
+        public class ScheduleModel
+        {
+            public int ScheduleID { get; set; }
+            public int DoctorID { get; set; }
+            public string DoctorName { get; set; } // 用于展示医生姓名
+            public DateTime Date { get; set; } = DateTime.Today; // 默认当天
+            public string TimeSlot { get; set; } // 上午/下午
+            public int MaxAppointments { get; set; } = 10; // 默认最大预约数
         }
 
-        // 医生模型类
-        public class DoctorModel
+        // DoctorController中新增排班相关方法
+        // 1. 排班列表（查询）
+        public IActionResult Schedule()
+        {
+            // 验证权限：仅管理员/医院工作人员可访问
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Staff"))
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            DataTable dtSchedules = new DataTable();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    // 关联医生表查询排班完整信息
+                    string sql = @"
+                SELECT s.ScheduleID, s.DoctorID, d.DoctorName, s.Date, s.TimeSlot, s.MaxAppointments
+                FROM dbo.Schedules s
+                LEFT JOIN dbo.Doctors d ON s.DoctorID = d.DoctorID
+                WHERE d.IsActive = 1
+                ORDER BY s.Date DESC, s.TimeSlot";
+                    SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+                    adapter.Fill(dtSchedules);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "加载排班列表失败：" + ex.Message;
+            }
+
+            ViewBag.Doctors = GetActiveDoctors(); // 获取可用医生列表
+            return View(dtSchedules);
+        }
+        #region 医生排班
+        // 2. 新增排班（提交）
+        [HttpPost]
+        public IActionResult AddSchedule(ScheduleModel model)
+        {
+            try
+            {
+                // 基础验证
+                if (model.DoctorID == 0 || string.IsNullOrEmpty(model.TimeSlot) || model.MaxAppointments <= 0)
+                {
+                    TempData["Error"] = "医生、时段、最大预约数为必填项，且最大预约数必须大于0！";
+                    return RedirectToAction("Schedule");
+                }
+
+                // 检查是否重复排班（同一医生同一天同一时段）
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    string checkSql = @"
+                SELECT COUNT(1) FROM dbo.Schedules 
+                WHERE DoctorID = @DoctorID AND Date = @Date AND TimeSlot = @TimeSlot";
+                    SqlCommand checkCmd = new SqlCommand(checkSql, conn);
+                    checkCmd.Parameters.AddWithValue("@DoctorID", model.DoctorID);
+                    checkCmd.Parameters.AddWithValue("@Date", model.Date);
+                    checkCmd.Parameters.AddWithValue("@TimeSlot", model.TimeSlot);
+                    int count = (int)checkCmd.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        TempData["Error"] = $"该医生{model.Date:yyyy-MM-dd}{model.TimeSlot}已排班，不可重复添加！";
+                        return RedirectToAction("Schedule");
+                    }
+
+                    // 插入排班数据
+                    string insertSql = @"
+                INSERT INTO dbo.Schedules (DoctorID, Date, TimeSlot, MaxAppointments)
+                VALUES (@DoctorID, @Date, @TimeSlot, @MaxAppointments)";
+                    SqlCommand insertCmd = new SqlCommand(insertSql, conn);
+                    insertCmd.Parameters.AddWithValue("@DoctorID", model.DoctorID);
+                    insertCmd.Parameters.AddWithValue("@Date", model.Date);
+                    insertCmd.Parameters.AddWithValue("@TimeSlot", model.TimeSlot);
+                    insertCmd.Parameters.AddWithValue("@MaxAppointments", model.MaxAppointments);
+
+                    int rows = insertCmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "排班添加成功！";
+                    }
+                    else
+                    {
+                        TempData["Error"] = "添加排班失败，请重试！";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "添加排班出错：" + ex.Message;
+            }
+
+            return RedirectToAction("Schedule");
+        }
+
+        // 3. 编辑排班（提交）
+        [HttpPost]
+        public IActionResult EditSchedule(ScheduleModel model)
+        {
+            try
+            {
+                // 基础验证
+                if (model.ScheduleID == 0 || model.DoctorID == 0 || string.IsNullOrEmpty(model.TimeSlot) || model.MaxAppointments <= 0)
+                {
+                    TempData["Error"] = "排班ID、医生、时段、最大预约数为必填项，且最大预约数必须大于0！";
+                    return RedirectToAction("Schedule");
+                }
+
+                // 检查编辑后是否重复（排除自身）
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    string checkSql = @"
+                SELECT COUNT(1) FROM dbo.Schedules 
+                WHERE DoctorID = @DoctorID AND Date = @Date AND TimeSlot = @TimeSlot AND ScheduleID != @ScheduleID";
+                    SqlCommand checkCmd = new SqlCommand(checkSql, conn);
+                    checkCmd.Parameters.AddWithValue("@DoctorID", model.DoctorID);
+                    checkCmd.Parameters.AddWithValue("@Date", model.Date);
+                    checkCmd.Parameters.AddWithValue("@TimeSlot", model.TimeSlot);
+                    checkCmd.Parameters.AddWithValue("@ScheduleID", model.ScheduleID);
+                    int count = (int)checkCmd.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        TempData["Error"] = $"该医生{model.Date:yyyy-MM-dd}{model.TimeSlot}已排班，不可重复！";
+                        return RedirectToAction("Schedule");
+                    }
+
+                    // 更新排班数据
+                    string updateSql = @"
+                UPDATE dbo.Schedules 
+                SET DoctorID = @DoctorID, Date = @Date, TimeSlot = @TimeSlot, MaxAppointments = @MaxAppointments
+                WHERE ScheduleID = @ScheduleID";
+                    SqlCommand updateCmd = new SqlCommand(updateSql, conn);
+                    updateCmd.Parameters.AddWithValue("@ScheduleID", model.ScheduleID);
+                    updateCmd.Parameters.AddWithValue("@DoctorID", model.DoctorID);
+                    updateCmd.Parameters.AddWithValue("@Date", model.Date);
+                    updateCmd.Parameters.AddWithValue("@TimeSlot", model.TimeSlot);
+                    updateCmd.Parameters.AddWithValue("@MaxAppointments", model.MaxAppointments);
+
+                    int rows = updateCmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "排班修改成功！";
+                    }
+                    else
+                    {
+                        TempData["Error"] = "修改排班失败，请重试！";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "修改排班出错：" + ex.Message;
+            }
+
+            return RedirectToAction("Schedule");
+        }
+
+        // 4. 删除排班
+        public IActionResult DeleteSchedule(int id)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    // 检查是否有关联的预约记录
+                    string checkSql = @"
+                SELECT COUNT(1) FROM dbo.Appointments a
+                LEFT JOIN dbo.Schedules s ON a.ScheduleID = s.ScheduleID
+                WHERE s.ScheduleID = @ScheduleID";
+                    SqlCommand checkCmd = new SqlCommand(checkSql, conn);
+                    checkCmd.Parameters.AddWithValue("@ScheduleID", id);
+                    int count = (int)checkCmd.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        TempData["Error"] = "该排班存在关联的预约记录，无法删除！";
+                        return RedirectToAction("Schedule");
+                    }
+
+                    // 执行删除
+                    string deleteSql = "DELETE FROM dbo.Schedules WHERE ScheduleID = @ScheduleID";
+                    SqlCommand deleteCmd = new SqlCommand(deleteSql, conn);
+                    deleteCmd.Parameters.AddWithValue("@ScheduleID", id);
+
+                    int rows = deleteCmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "排班删除成功！";
+                    }
+                    else
+                    {
+                        TempData["Error"] = "删除排班失败，请重试！";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "删除排班出错：" + ex.Message;
+            }
+
+            return RedirectToAction("Schedule");
+        }
+
+        // 辅助方法：获取激活的医生列表
+        private DataTable GetActiveDoctors()
+        {
+            DataTable dt = new DataTable();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = "SELECT DoctorID, DoctorName FROM dbo.Doctors WHERE IsActive = 1 ORDER BY DoctorName";
+                SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+                adapter.Fill(dt);
+            }
+            return dt;
+        }
+        //
+
+#endregion
+    }
+
+    // 医生模型类
+    public class DoctorModel
         {
         public int DoctorID { get; set; } = 0;
             public string DoctorName { get; set; }
@@ -291,6 +527,7 @@ namespace COMMSMVC.Controllers
             public string Description { get; set; }
             public bool IsActive { get; set; }
         }
+ 
     }
     //
 

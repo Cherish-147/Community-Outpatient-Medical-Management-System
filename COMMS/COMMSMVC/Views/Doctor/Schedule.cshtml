@@ -1,0 +1,477 @@
+﻿@using System.Data
+@using COMMSMVC.Controllers
+@model DataTable
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "出诊安排 - 社区门诊医务管理系统";
+    DataTable dtDoctors = ViewBag.Doctors as DataTable;
+}
+
+<!-- 排班管理样式 -->
+<style>
+    .schedule-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .form-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .table-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .schedule-table th {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .schedule-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .schedule-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+        gap: 1rem;
+    }
+
+    .form-col {
+        flex: 1;
+        padding: 0 0.75rem;
+        min-width: 200px;
+    }
+
+    .btn-submit {
+        background-color: #0d6efd;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .btn-submit:hover {
+            background-color: #0b5ed7;
+        }
+
+    .btn-edit {
+        background-color: #198754;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+    }
+
+        .btn-edit:hover {
+            background-color: #157347;
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+
+        .btn-delete:hover {
+            background-color: #bb2d3b;
+            color: white;
+            text-decoration: none;
+        }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .time-slot-tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        background-color: #e9ecef;
+        color: #495057;
+    }
+
+    /* 编辑弹窗样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .modal.show {
+            display: flex;
+        }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+    }
+
+        .modal-close:hover {
+            color: #dc3545;
+        }
+</style>
+
+<div class="schedule-container">
+    <!-- 提示信息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-error">
+            <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="alert alert-error">
+            <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+        </div>
+    }
+
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <h2 class="fw-bold text-primary">
+            <i class="bi bi-calendar-week"></i> 医生出诊安排
+        </h2>
+    </div>
+
+    <!-- 新增排班表单 -->
+    <div class="form-card">
+        <h5 class="mb-3 text-secondary">
+            <i class="bi bi-plus-circle"></i> 新增排班
+        </h5>
+        <form asp-controller="Doctor" asp-action="AddSchedule" method="post">
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            医生 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" name="DoctorID" required>
+                            <option value="">请选择医生</option>
+                            @if (dtDoctors != null && dtDoctors.Rows.Count > 0)
+                            {
+                                @foreach (DataRow row in dtDoctors.Rows)
+                                {
+                                    <option value="@row["DoctorID"]">@row["DoctorName"]</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            出诊日期 <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" name="Date" value="@DateTime.Today.ToString("yyyy-MM-dd")" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            出诊时段 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" name="TimeSlot" required>
+                            <option value="">请选择时段</option>
+                            <option value="上午">上午</option>
+                            <option value="下午">下午</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            最大预约数 <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" name="MaxAppointments" value="10" min="1" max="100" required>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit mt-2">
+                <i class="bi bi-save"></i> 保存排班
+            </button>
+        </form>
+    </div>
+
+    <!-- 排班列表 -->
+    <div class="table-container">
+        @if (Model != null && Model.Rows.Count > 0)
+        {
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>医生姓名</th>
+                        <th>出诊日期</th>
+                        <th>出诊时段</th>
+                        <th>最大预约数</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@row["ScheduleID"]</td>
+                            <td>@row["DoctorName"]</td>
+                            <td>@Convert.ToDateTime(row["Date"]).ToString("yyyy-MM-dd")</td>
+                            <td><span class="time-slot-tag">@row["TimeSlot"]</span></td>
+                            <td>@row["MaxAppointments"]</td>
+                            <td>
+                                <!-- 编辑按钮：点击打开弹窗 -->
+                                <button class="btn-edit edit-btn"
+                                        data-id="@row["ScheduleID"]"
+                                        data-doctorid="@row["DoctorID"]"
+                                        data-date="@Convert.ToDateTime(row["Date"]).ToString("yyyy-MM-dd")"
+                                        data-timeslot="@row["TimeSlot"]"
+                                        data-max="@row["MaxAppointments"]">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <a href="/Doctor/DeleteSchedule/@row["ScheduleID"]" class="btn-delete" onclick="return confirm('确认删除该排班吗？删除后无法恢复！')">
+                                    <i class="bi bi-trash"></i> 删除
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-info-circle text-muted fs-3"></i>
+                <p class="text-muted mt-2">暂无排班信息，请点击"新增排班"添加</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- 编辑排班弹窗 -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <h5 class="mb-3 text-secondary">
+            <i class="bi bi-pencil"></i> 编辑排班
+        </h5>
+        <form asp-controller="Doctor" asp-action="EditSchedule" method="post" id="editForm">
+            <input type="hidden" name="ScheduleID" id="edit-ScheduleID">
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            医生 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" name="DoctorID" id="edit-DoctorID" required>
+                            <option value="">请选择医生</option>
+                            @if (dtDoctors != null && dtDoctors.Rows.Count > 0)
+                            {
+                                @foreach (DataRow row in dtDoctors.Rows)
+                                {
+                                    <option value="@row["DoctorID"]">@row["DoctorName"]</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            出诊日期 <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" name="Date" id="edit-Date" required>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row mt-2">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            出诊时段 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" name="TimeSlot" id="edit-TimeSlot" required>
+                            <option value="">请选择时段</option>
+                            <option value="上午">上午</option>
+                            <option value="下午">下午</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            最大预约数 <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" name="MaxAppointments" id="edit-MaxAppointments" min="1" max="100" required>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit mt-3">
+                <i class="bi bi-save"></i> 更新排班
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 编辑弹窗相关
+        $(document).ready(function() {
+            // 打开编辑弹窗
+            $('.edit-btn').click(function() {
+                // 获取行数据
+                let id = $(this).data('id');
+                let doctorId = $(this).data('doctorid');
+                let date = $(this).data('date');
+                let timeSlot = $(this).data('timeslot');
+                let max = $(this).data('max');
+
+                // 填充表单
+                $('#edit-ScheduleID').val(id);
+                $('#edit-DoctorID').val(doctorId);
+                $('#edit-Date').val(date);
+                $('#edit-TimeSlot').val(timeSlot);
+                $('#edit-MaxAppointments').val(max);
+
+                // 显示弹窗
+                $('#editModal').addClass('show');
+            });
+
+            // 表单提交验证
+            $('form').submit(function() {
+                let requiredFields = $(this).find('[required]');
+                for (let i = 0; i < requiredFields.length; i++) {
+                    if (!$(requiredFields[i]).val()) {
+                        alert("标有 * 的字段为必填项，请完整填写！");
+                        $(requiredFields[i]).focus();
+                        return false;
+                    }
+                }
+                return confirm("确认保存排班信息吗？");
+            });
+        });
+
+        // 关闭弹窗
+        function closeModal() {
+            $('#editModal').removeClass('show');
+        }
+
+        // 点击弹窗外区域关闭
+        window.onclick = function(event) {
+            let modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+}
