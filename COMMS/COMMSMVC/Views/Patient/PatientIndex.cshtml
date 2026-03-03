@@ -1,51 +1,66 @@
 ﻿@{
-    Layout = "~/Views/Shared/_Layout_Patient.cshtml"; // 指定使用患者专属布局
-    ViewData["Title"] = "患者首页 - 社区门诊患者中心";
+    Layout = "~/Views/Shared/_Layout_Patient.cshtml"; // 绑定患者专属布局
+    ViewData["Title"] = "社区门诊医务管理系统 - 患者中心";
 }
 
-<!-- 患者首页样式 -->
+<!-- 患者首页专属样式 -->
 <style>
-    .stat-card {
-        border: 1px solid #e9ecef;
+    /* 个人信息卡片 */
+    .profile-card {
+        border: 1px solid #dee2e6;
         border-radius: 8px;
         padding: 1.5rem;
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        text-align: center;
-        height: 100%;
+        background-color: #f8f9fa;
     }
 
-        .stat-card .stat-number {
+        .profile-card .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2rem;
-            font-weight: 700;
-            color: #0d6efd;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
 
-    .quick-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
+    /* 就诊记录卡片 */
+    .record-card {
+        border: 1px solid #dee2e6;
         border-radius: 8px;
-        background-color: #e8f4ff;
-        color: #0d6efd;
-        text-decoration: none;
-        height: 100%;
+        padding: 1rem;
+        margin-bottom: 1rem;
         transition: all 0.3s ease;
     }
 
-        .quick-btn:hover {
-            background-color: #0d6efd;
-            color: white;
-            text-decoration: none;
+        .record-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .quick-btn i {
-            font-size: 1.5rem;
-            margin-right: 0.5rem;
+        .record-card .record-title {
+            font-weight: 600;
+            color: #0d6efd;
         }
 
+        .record-card .record-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+    /* 按钮样式优化 */
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        height: 100%;
+    }
+
+    /* 提醒样式 */
     .reminder-box {
         background-color: #fff3cd;
         border: 1px solid #ffeeba;
@@ -53,83 +68,240 @@
         padding: 1rem;
         color: #856404;
     }
+
+    /* 适配患者专属布局的样式调整 */
+    .container-fluid {
+        max-width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .py-4 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* 卡片hover效果增强 */
+    .card {
+        transition: all 0.3s ease;
+    }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
 </style>
 
 <!-- 患者首页内容 -->
-<div class="row mb-4">
-    <div class="col-12">
+<div class="container-fluid py-4">
+    <!-- 欢迎信息 - 适配专属布局的视觉风格 -->
+    <div class="mb-4">
         <h2 class="fw-bold text-primary">
-            <i class="bi bi-person-heart"></i> 欢迎回来，@Context.Session.GetString("Username")！
+            <i class="bi bi-person-heart"></i> 患者中心
         </h2>
-        <p class="text-muted">今日日期：@DateTime.Now.ToString("yyyy年MM月dd日")</p>
-    </div>
-</div>
-
-<!-- 就医提醒 -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="reminder-box">
-            <h6 class="mb-2"><i class="bi bi-bell"></i> 就医提醒</h6>
-            @if (true)
+        <p class="text-muted">
+            @if (!string.IsNullOrEmpty(Context.Session.GetString("Username")))
             {
-                <!-- 实际项目中替换为数据库查询的预约信息 -->
-                <p class="mb-0">您有1条待就诊预约：</p>
-                <p class="small fw-bold">2025-04-10 上午9:00 | 内科 | 张医生</p>
+                <span>尊敬的患者：@Context.Session.GetString("Username")</span>
+                <span class="ms-3">今日日期：@DateTime.Now.ToString("yyyy年MM月dd日")</span>
             }
-            else
-            {
-                <p class="mb-0">暂无待就诊预约，可点击下方按钮预约挂号</p>
-            }
+        </p>
+    </div>
+
+    <div class="row">
+        <!-- 左侧个人信息栏 - 保留原有完整结构 -->
+        <div class="col-md-3 mb-4">
+            <div class="profile-card">
+                <div class="avatar">
+                    <i class="bi bi-person"></i>
+                </div>
+                <h5 class="mb-1">@Context.Session.GetString("Username")</h5>
+                <p class="text-muted mb-2">患者ID：@Context.Session.GetString("UserID")</p>
+
+                <div class="mb-2">
+                    <small class="text-secondary">联系电话：</small>
+                    <span>138****8888</span> <!-- 实际项目中从数据库获取 -->
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary">医保类型：</small>
+                    <span>城乡居民医保</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary">建档时间：</small>
+                    <span>2024-05-12</span>
+                </div>
+
+                <!-- 链接指向患者布局中的个人信息管理 -->
+                <a href="/Patient/EditProfile" class="btn btn-primary btn-sm w-100 mt-3">
+                    <i class="bi bi-pencil"></i> 编辑个人信息
+                </a>
+            </div>
+
+            <!-- 就医提醒 - 保留原有样式 -->
+            <div class="reminder-box mt-4">
+                <h6 class="mb-2"><i class="bi bi-bell-warning"></i> 就医提醒</h6>
+                <p class="mb-1 small">您有1次复诊预约：</p>
+                <p class="small">
+                    <strong>时间：</strong>2025-04-10 上午 9:00<br>
+                    <strong>科室：</strong>内科<br>
+                    <strong>医生：</strong>张医生
+                </p>
+            </div>
+        </div>
+
+        <!-- 右侧核心功能区 - 精简非核心快捷按钮，保留和侧边栏匹配的功能 -->
+        <div class="col-md-9">
+            <!-- 快捷操作 - 只保留预约挂号、个人信息管理、缴费记录（和侧边栏一致） -->
+            <div class="row mb-4">
+                <h4 class="mb-3"><i class="bi bi-speedometer2 text-primary"></i> 快捷服务</h4>
+
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <a href="/Patient/RegisterAppointment" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
+                        <i class="bi bi-calendar-plus fs-3 mb-2"></i>
+                        <span>预约挂号</span>
+                    </a>
+                </div>
+
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <a href="/Patient/EditProfile" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
+                        <i class="bi bi-person-pin fs-3 mb-2"></i>
+                        <span>个人信息管理</span>
+                    </a>
+                </div>
+
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <a href="/Patient/MyPayments" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
+                        <i class="bi bi-cash-coin fs-3 mb-2"></i>
+                        <span>缴费记录</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 最近就诊记录 - 保留原有完整结构（作为辅助信息展示） -->
+            <div class="mb-4">
+                <h4 class="mb-3"><i class="bi bi-clock-history text-primary"></i> 最近就诊记录</h4>
+
+                <div class="record-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="record-title">2025-03-25 内科就诊</div>
+                            <p class="mb-1 small mt-1">
+                                <strong>接诊医生：</strong>李医生 | <strong>就诊类型：</strong>普通门诊
+                            </p>
+                            <p class="small text-muted">
+                                诊断结果：上呼吸道感染 | 处方：感冒灵颗粒、阿莫西林胶囊
+                            </p>
+                        </div>
+                        <div class="record-time">
+                            <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary">查看详情</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="record-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="record-title">2025-02-18 全科就诊</div>
+                            <p class="mb-1 small mt-1">
+                                <strong>接诊医生：</strong>王医生 | <strong>就诊类型：</strong>复查
+                            </p>
+                            <p class="small text-muted">
+                                诊断结果：高血压控制良好 | 处方：硝苯地平缓释片
+                            </p>
+                        </div>
+                        <div class="record-time">
+                            <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary">查看详情</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="record-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="record-title">2025-01-10 外科就诊</div>
+                            <p class="mb-1 small mt-1">
+                                <strong>接诊医生：</strong>赵医生 | <strong>就诊类型：</strong>外伤处理
+                            </p>
+                            <p class="small text-muted">
+                                诊断结果：手部擦伤 | 处方：碘伏、创可贴
+                            </p>
+                        </div>
+                        <div class="record-time">
+                            <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary">查看详情</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <a href="javascript:void(0);" class="text-primary">查看全部就诊记录 <i class="bi bi-chevron-right"></i></a>
+                </div>
+            </div>
+
+            <!-- 常用医生推荐 - 保留原有结构，预约按钮改为占位（非核心功能） -->
+            <div>
+                <h4 class="mb-3"><i class="bi bi-star text-primary"></i> 常用医生</h4>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="avatar mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                    <i class="bi bi-person-doctor"></i>
+                                </div>
+                                <h5 class="card-title">李医生</h5>
+                                <p class="card-text text-muted small">内科 | 主治医师</p>
+                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="avatar mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                    <i class="bi bi-person-doctor"></i>
+                                </div>
+                                <h5 class="card-title">王医生</h5>
+                                <p class="card-text text-muted small">全科 | 副主任医师</p>
+                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="avatar mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                    <i class="bi bi-person-doctor"></i>
+                                </div>
+                                <h5 class="card-title">张医生</h5>
+                                <p class="card-text text-muted small">心内科 | 主任医师</p>
+                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- 快捷操作 -->
-<div class="row mb-4">
-    <h4 class="mb-3 text-secondary"><i class="bi bi-speedometer2"></i> 快捷服务</h4>
-    <div class="col-md-4 col-sm-6 mb-3">
-        <a href="/Patient/RegisterAppointment" class="quick-btn">
-            <i class="bi bi-calendar-plus"></i>
-            <span>预约挂号</span>
-        </a>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-3">
-        <a href="/Patient/EditProfile" class="quick-btn">
-            <i class="bi bi-person-pin"></i>
-            <span>个人信息管理</span>
-        </a>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-3">
-        <a href="/Patient/MyPayments" class="quick-btn">
-            <i class="bi bi-cash-coin"></i>
-            <span>缴费记录</span>
-        </a>
-    </div>
-</div>
+<!-- 患者首页专属脚本 - 保留原有内容 -->
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 可添加预约提醒倒计时、记录筛选等功能
+            console.log("患者中心页面加载完成");
 
-<!-- 个人就医数据 -->
-<div class="row">
-    <h4 class="mb-3 text-secondary"><i class="bi bi-graph-up"></i> 我的就医数据</h4>
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-number">3</div>
-            <div class="text-muted">累计就诊次数</div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-number">1</div>
-            <div class="text-muted">待就诊预约</div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-number">¥286</div>
-            <div class="text-muted">累计缴费金额</div>
-        </div>
-    </div>
-</div>
-
-
-
-
+            // 新增：就诊记录详情点击提示（非核心功能暂未实现）
+            $(".btn-outline-secondary").click(function() {
+                alert("该功能正在开发中，敬请期待！");
+            });
+        });
+    </script>
+}

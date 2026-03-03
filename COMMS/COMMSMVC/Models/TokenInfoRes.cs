@@ -13,5 +13,8 @@ namespace COMMSMVC.Models
         }
         [JsonPropertyName("token")]
         public string JWTToken { get; set; }
+
+        [JsonPropertyName("role")]
+        public string Role { get; set; }
     }
 }
