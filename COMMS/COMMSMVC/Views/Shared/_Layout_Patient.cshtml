@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 社区门诊患者中心</title>
+
+    <!-- 第三方样式库 -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- 项目自定义样式 -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/COMMSMVC.styles.css" asp-append-version="true" />
+
+    <!-- 患者布局专用样式（可单独维护） -->
+    <link rel="stylesheet" href="~/css/_Layout_Patient.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- 顶部导航栏（患者专属） -->
+    <nav class="navbar navbar-expand-lg top-nav bg-primary text-white">
+        <div class="container-fluid">
+            <!-- 移动端侧边栏切换按钮 -->
+            <button class="btn btn-outline-light me-2 d-lg-none" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <!-- 系统名称（患者视角） -->
+            <a class="navbar-brand fw-bold text-white" asp-controller="Patient" asp-action="PatientIndex">
+                <i class="bi bi-hospital"></i> 社区门诊患者中心
+            </a>
+
+            <!-- 右侧用户信息区域 -->
+            <div class="d-flex align-items-center">
+                @if (!string.IsNullOrEmpty(Context.Session.GetString("Username")))
+                {
+                    <!-- 患者登录状态 -->
+                    <span class="text-white me-3">
+                        <i class="bi bi-person"></i> @Context.Session.GetString("Username")
+                    </span>
+                    <a class="nav-link text-white me-2" asp-controller="Patient" asp-action="EditProfile">
+                        <i class="bi bi-gear"></i> 个人设置
+                    </a>
+                    <a class="nav-link text-white" asp-controller="Home" asp-action="Logout">
+                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </a>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <!-- 侧边导航栏（仅患者核心功能） -->
+    <div class="sidebar" id="sidebar">
+        <ul class="nav flex-column">
+            <!-- 患者首页 -->
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "PatientIndex" && ViewContext.RouteData.Values["Controller"].ToString() == "Patient" ? "active" : "")"
+                   asp-controller="Patient" asp-action="PatientIndex">
+                    <i class="bi bi-house-door me-2"></i> 患者首页
+                </a>
+            </li>
+
+            <!-- 患者核心功能（仅3项） -->
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "RegisterAppointment" ? "active" : "")"
+                   asp-controller="Patient" asp-action="RegisterAppointment">
+                    <i class="bi bi-calendar-plus me-2"></i> 预约挂号
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "active" : "")"
+                   asp-controller="Patient" asp-action="EditProfile">
+                    <i class="bi bi-person-pin me-2"></i> 个人信息管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "MyPayments" ? "active" : "")"
+                   asp-controller="Patient" asp-action="MyPayments">
+                    <i class="bi bi-cash-coin me-2"></i> 缴费记录
+                </a>
+            </li>
+
+            <!-- 公共菜单 -->
+            <li class="nav-item mt-3 border-top pt-3">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Privacy" ? "active" : "")"
+                   asp-controller="Home" asp-action="Privacy">
+                    <i class="bi bi-shield-lock me-2"></i> 隐私政策
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="container-fluid px-4 py-4">
+            <!-- 页面提示信息 -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- 页面主体内容 -->
+            <main role="main">
+                @RenderBody()
+            </main>
+
+            <!-- 患者端页脚 -->
+            <footer class="mt-auto py-3 mt-5">
+                <div class="container-fluid">
+                    <div class="row text-center">
+                        <div class="col">
+                            &copy; @DateTime.Now.Year - 社区门诊患者服务平台 |
+                            <a href="#" class="text-muted">使用帮助</a> |
+                            <a href="#" class="text-muted">联系我们</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 脚本引用 -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 侧边栏控制脚本 -->
+    <script>
+        // 移动端侧边栏切换逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+        });
+    </script>
+
+    <!-- 项目自定义脚本 -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- 页面专属脚本区域 -->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
