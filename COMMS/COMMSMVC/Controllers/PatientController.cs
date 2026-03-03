@@ -4,24 +4,52 @@ namespace COMMSMVC.Controllers
 {
     public class PatientController : Controller
     {
+        // 患者首页
         public IActionResult PatientIndex()
         {
-            //// 获取当前登录患者ID
-            //var patientId = Context.Session.GetString("UserID");
-            //// 查询患者基本信息
-            //var patientInfo = _patientService.GetPatientInfo(patientId);
-            //// 查询最近就诊记录
-            //var recentRecords = _recordService.GetRecentRecords(patientId, 3);
-            //// 查询常用医生
-            //var commonDoctors = _doctorService.GetCommonDoctors(patientId);
-            //// 查询就医提醒
-            //var reminders = _reminderService.GetPatientReminders(patientId);
+            // 验证患者是否登录
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                HttpContext.Session.GetString("Role") != "Patient")
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            return View();
+        } // 预约挂号
+        public IActionResult RegisterAppointment()
+        {
+            // 登录验证
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                HttpContext.Session.GetString("Role") != "Patient")
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            ViewData["Title"] = "预约挂号 - 社区门诊患者中心";
+            return View();
+        }
 
-            //ViewData["PatientInfo"] = patientInfo;
-            //ViewData["RecentRecords"] = recentRecords;
-            //ViewData["CommonDoctors"] = commonDoctors;
-            //ViewData["Reminders"] = reminders;
+        // 个人信息管理
+        public IActionResult EditProfile()
+        {
+            // 登录验证
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                HttpContext.Session.GetString("Role") != "Patient")
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            ViewData["Title"] = "个人信息管理 - 社区门诊患者中心";
+            return View();
+        }
 
+        // 缴费记录
+        public IActionResult MyPayments()
+        {
+            // 登录验证
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                HttpContext.Session.GetString("Role") != "Patient")
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            ViewData["Title"] = "缴费记录 - 社区门诊患者中心";
             return View();
         }
     }

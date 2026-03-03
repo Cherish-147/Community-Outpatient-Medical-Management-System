@@ -71,6 +71,7 @@ namespace COMMSMVC.Controllers
                 //´æµ½Session
                 HttpContext.Session.SetString("UserID",tokenInfo.UserID );
                 HttpContext.Session.SetString("Username",tokenInfo.UserName );
+                HttpContext.Session.SetString("Role",tokenInfo.Role );
                 HttpContext.Session.SetString("JwtToken", tokenInfo.JWTToken);
                 return RedirectToAction("Index", "Home");
             }
