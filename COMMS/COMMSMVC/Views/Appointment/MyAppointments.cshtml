@@ -203,9 +203,10 @@
                             <td>@(string.IsNullOrEmpty(row["Remark"].ToString()) ? "-" : row["Remark"])</td>
                             <td>@Convert.ToDateTime(row["CreatedAt"]).ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
+                                <!-- 替换原有取消按钮代码 -->
                                 @if (row["Status"].ToString() == "已预约" && Convert.ToDateTime(row["Date"]) >= DateTime.Today)
                                 {
-                                    <a href="/Appointment/Cancel/@row["AppointmentID"]" class="btn-cancel" onclick="return confirm('确认取消该挂号吗？取消后将释放号源！')">
+                                    <a href="/Appointment/Cancel/@row["AppointmentID"]" class="btn-cancel" onclick="return confirm('确认取消该挂号吗？取消后号源将自动恢复，可重新预约！')">
                                         <i class="bi bi-x-circle"></i> 取消挂号
                                     </a>
                                 }
