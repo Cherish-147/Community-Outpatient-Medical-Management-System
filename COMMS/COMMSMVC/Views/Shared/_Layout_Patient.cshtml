@@ -61,11 +61,28 @@
             </li>
 
             <!-- 患者核心功能（仅3项） -->
+            <!-- 挂号管理 -->
             <li class="nav-item">
-                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "RegisterAppointment" ? "active" : "")"
-                   asp-controller="Patient" asp-action="RegisterAppointment">
-                    <i class="bi bi-calendar-plus me-2"></i> 预约挂号
+                <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Appointment" ? "active" : "")"
+                   href="#" role="button" data-bs-toggle="collapse" data-bs-target="#appointmentMenu" aria-expanded="false">
+                    <i class="bi bi-calendar-check me-2"></i> 挂号管理
                 </a>
+                <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Appointment" ? "show" : "")" id="appointmentMenu">
+                    <ul class="list-unstyled ps-3">
+                        <li class="mb-1">
+                            <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                               asp-controller="Appointment" asp-action="Index">
+                                <i class="bi bi-plus-circle me-2"></i> 新增挂号
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "MyAppointments" ? "active fw-bold" : "")"
+                               asp-controller="Appointment" asp-action="MyAppointments">
+                                <i class="bi bi-list-check me-2"></i> 我的挂号
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "active" : "")"
