@@ -1,0 +1,88 @@
+﻿@using COMMSMVC.Models
+@model Medications
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "编辑药品 - 社区门诊医务管理系统";
+}
+
+<!-- 样式复用（与新增页面相同） -->
+<style>/* 此处省略，与之前新增样式一致 */</style>
+
+<div class="container py-5">
+    <div class="form-container">
+        <h2 class="form-title">
+            <i class="bi bi-pencil-square"></i> 编辑药品信息
+        </h2>
+
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+            </div>
+        }
+
+        <form asp-controller="Medication" asp-action="Edit" asp-route-id="@Model.MedicationID" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MedicationID" />
+            <input type="hidden" asp-for="CreatedAt" />  <!-- 保留原创建时间 -->
+            <!-- 第一行：药品名称 + 规格 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">药品名称 <span class="required-mark">*</span></label>
+                        <input type="text" class="form-control" asp-for="Name" required maxlength="100">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">规格 <span class="required-mark">*</span></label>
+                        <input type="text" class="form-control" asp-for="Specification" required maxlength="50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二行：价格 + 库存 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">单价（元） <span class="required-mark">*</span></label>
+                        <input type="number" step="0.01" min="0" class="form-control" asp-for="Price" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">库存数量 <span class="required-mark">*</span></label>
+                        <input type="number" step="1" min="0" class="form-control" asp-for="Stock" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 可选字段：生产厂家、批准文号（如果模型包含） -->
+            <!-- ... 可根据需要添加 -->
+            <!-- 状态 -->
+            <div class="form-group mb-4">
+                <label class="form-label">状态</label>
+                <select class="form-control" asp-for="IsActive">
+                    <option value="true">启用</option>
+                    <option value="false">禁用</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-save"></i> 保存修改
+            </button>
+            <a asp-controller="Medication" asp-action="Index" class="btn-back">
+                <i class="bi bi-arrow-left"></i> 返回药品列表
+            </a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 可添加前端验证（参考新增页面）
+        });
+    </script>
+}
