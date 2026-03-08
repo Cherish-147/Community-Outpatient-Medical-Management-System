@@ -209,7 +209,19 @@
         <h2 class="form-title">
             <i class="bi bi-pills"></i> 药品库存管理
         </h2>
-
+        <!-- 提示信息 -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-error">
+                <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+            </div>
+        }
         <!-- 可选的错误提示区域（如果需要可以填充） -->
         @if (!string.IsNullOrEmpty(ViewBag.Error))
         {
