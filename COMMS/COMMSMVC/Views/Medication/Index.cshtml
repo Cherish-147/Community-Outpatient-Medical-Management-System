@@ -1,20 +1,235 @@
-﻿@model List<Medications>
+﻿@using COMMSMVC.Models
+@model List<Medications>
 
 @{
-    ViewData["Title"] = "药品库存";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "药品库存 - 社区门诊医务管理系统";
 }
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>药品库存</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> 新增药品
-        </a>
-    </div>
+<!-- 复用新增医生页面的样式，保持风格统一 -->
+<style>
+    .form-container {
+        max-width: 1200px; /* 表格需要更宽，适当增加宽度 */
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-hover table-striped">
+    .form-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+    .required-mark {
+        color: #dc3545;
+        margin-left: 2px;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+    }
+
+    .form-col {
+        flex: 1;
+        padding: 0 0.75rem;
+        min-width: 250px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+        .btn-submit:hover {
+            background-color: #0b5ed7;
+            color: white;
+        }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+        .btn-back:hover {
+            text-decoration: underline;
+        }
+
+    .alert-error {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 表格自定义样式，与卡片融合 */
+    .table-custom {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+        .table-custom th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            padding: 1rem 0.75rem;
+            border-bottom: 2px solid #dee2e6;
+            color: #333;
+        }
+
+        .table-custom td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+    .badge-active {
+        background-color: #28a745;
+        color: white;
+        padding: 0.35rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .badge-inactive {
+        background-color: #6c757d;
+        color: white;
+        padding: 0.35rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .action-btn {
+        padding: 0.35rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-right: 0.25rem;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+
+        .action-btn i {
+            margin-right: 0.25rem;
+        }
+
+    .btn-edit {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+        .btn-edit:hover {
+            background-color: #e0a800;
+            color: #212529;
+        }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+            color: white;
+        }
+
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-create {
+        background-color: #0d6efd;
+        color: white;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .btn-create:hover {
+            background-color: #0b5ed7;
+            color: white;
+        }
+</style>
+
+<div class="container py-5">
+    <div class="form-container">
+        <h2 class="form-title">
+            <i class="bi bi-pills"></i> 药品库存管理
+        </h2>
+
+        <!-- 可选的错误提示区域（如果需要可以填充） -->
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+            </div>
+        }
+
+        <!-- 头部：标题和新增按钮 -->
+        <div class="header-actions">
+            <h4 style="margin:0; color:#0d6efd;">药品列表</h4>
+            <a asp-controller="Medication" asp-action="Create" class="btn-create">
+                <i class="bi bi-plus-circle"></i> 新增药品
+            </a>
+        </div>
+
+        <!-- 药品表格 -->
+        @if (Model != null && Model.Any())
+        {
+            <table class="table-custom">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -29,48 +244,64 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.MedicationID</td>
-                                <td>@item.Name</td>
-                                <td>@item.Specification</td>
-                                <td>@item.Price.ToString("C")</td>
-                                <td>@item.Stock</td>
-                                <td>
-                                    @if (item.IsActive)
-                                    {
-                                        <span class="badge bg-success">启用</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">停用</span>
-                                    }
-                                </td>
-                                <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
-                                <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd") ?? "-")</td>
-                                <td>
-                                    <a asp-action="Edit" asp-route-id="@item.MedicationID" class="btn btn-sm btn-warning" title="编辑">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MedicationID" class="btn btn-sm btn-danger" title="删除"
-                                       onclick="return confirm('确定要删除该药品吗？');">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
+                    @foreach (var item in Model)
                     {
                         <tr>
-                            <td colspan="9" class="text-center text-muted">暂无药品数据</td>
+                            <td>@item.MedicationID</td>
+                            <td>@item.Name</td>
+                            <td>@item.Specification</td>
+                            <td>@item.Price.ToString("C")</td>
+                            <td>@item.Stock</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge-active">启用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-inactive">停用</span>
+                                }
+                            </td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            <td>
+                                <a asp-controller="Medication" asp-action="Edit" asp-route-id="@item.MedicationID" class="action-btn btn-edit" title="编辑">
+                                    <i class="bi bi-pencil-square"></i> 编辑
+                                </a>
+                                <a asp-controller="Medication" asp-action="Delete" asp-route-id="@item.MedicationID" class="action-btn btn-delete" title="删除"
+                                   onclick="return confirm('确定要删除该药品吗？');">
+                                    <i class="bi bi-trash"></i> 删除
+                                </a>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
-        </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center" style="margin-top:2rem;">
+                暂无药品数据，请点击“新增药品”添加。
+            </div>
+        }
+
+        <!-- 返回医生列表链接（根据实际需求可保留或移除） -->
+@*         <div style="margin-top: 2rem; text-align: center;">
+      
+            <!-- 如果希望返回药品管理主页，可修改为： -->
+            <a asp-controller="Medication" asp-action="Index" class="btn-back">
+                <i class="bi bi-arrow-left"></i> 返回药品列表
+            </a>
+           
+        </div> *@
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // 可以保留一些脚本（如删除确认），已在按钮中内置 confirm，无需额外
+        $(document).ready(function() {
+            // 如果有需要可添加表格搜索/排序功能
+        });
+    </script>
+}
