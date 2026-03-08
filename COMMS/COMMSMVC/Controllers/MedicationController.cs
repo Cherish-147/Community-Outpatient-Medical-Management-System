@@ -233,7 +233,7 @@ namespace COMMSMVC.Controllers
 
         //删除
         [HttpGet]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public async Task<IActionResult> DeleteGet(int id)
         {            // 权限验证
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
                 (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Doctor"))
@@ -279,7 +279,7 @@ namespace COMMSMVC.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-
+            
             // 权限验证
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
                 (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Doctor"))
@@ -299,7 +299,7 @@ namespace COMMSMVC.Controllers
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             try
             {
-                var response = await client.DeleteAsync($"https://localhost:7190/api/Medication/DeleteMedicationById?medicationId={id}");
+                var response = await client.PostAsync($"https://localhost:7190/api/Medication/DeleteMedicationById?medicationId={id}",null);
 
 
                 if (response.IsSuccessStatusCode)

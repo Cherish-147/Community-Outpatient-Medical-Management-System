@@ -21,7 +21,7 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@item.Name</td>
+                <td>@item.MedicationID</td>
                 <td>
                     <!-- 使用表单提交删除请求，传递药品ID -->
                     <form asp-action="Delete" method="post" style="display:inline;">
