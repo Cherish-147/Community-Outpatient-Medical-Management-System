@@ -56,7 +56,14 @@ namespace COMMSMVC.Controllers
             {
                 // 患者仅能看到自己的信息
                 int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
-                ViewBag.Patients = GetPatientByUserId(userId);
+                //ViewBag.Patients = GetPatientByUserId(userId);
+                var dt = GetPatientByUserId(userId);
+                ViewBag.Patients = dt;
+                if (dt.Rows.Count <= 0) 
+                {
+                    //跳转患者创建https://localhost:7118/Patient/Register
+                    return RedirectToAction("Register", "Patient");
+                }
             }
 
             return View(dtAvailableSchedules);

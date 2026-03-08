@@ -170,11 +170,236 @@ namespace COMMSMVC.Controllers
             ViewData["Title"] = "缴费记录 - 社区门诊患者中心";
             return View();
         }
+        //患者信息首页
+        [HttpGet]
+        public IActionResult GetPatientInfo()
+        {
+            // 登录验证 + 角色验证（仅患者可访问）
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) || HttpContext.Session.GetString("Role") != "Patient")
+            {
+                TempData["Error"] = "仅患者可访问个人信息管理！";
+                return RedirectToAction("Login", "Home");
+            }
+            int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
+            ViewBag.UserId = userId;
+            DataTable dtPatient = new DataTable();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    string sql = @"
+                        SELECT PatientID, UserId, [Name], Birthday, Gender, IsMarried, Nation, IDCard, Phone,
+                               InsuranceNo, WorkUnit, Occupation, [Address], PastMedicalHistory, DrugAllergyHistory,
+                               GuardianName, GuardianAddress, GuardianPhone, GuardianRelationship, Remark,
+                               CreatedAt, UpdatedAt
+                        FROM dbo.Patients 
+                        WHERE UserId = @UserId";
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    adapter.Fill(dtPatient);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "加载患者信息失败：" + ex.Message;
+            }
 
+            return View(dtPatient);
+
+        }
+
+        #region 编辑患者信息
+        // 4. 编辑患者信息（页面）
+        public IActionResult Edit(int id)
+        {
+            // 登录验证 + 角色验证
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) || HttpContext.Session.GetString("Role") != "Patient")
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
+            DataRow patientRow = GetPatientInfoById(id, userId);
+
+            if (patientRow == null)
+            {
+                TempData["Error"] = "患者信息不存在或无权限访问！";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.PatientData = patientRow;
+            return View();
+        }
+
+        // 5. 编辑患者信息（提交）
+        [HttpPost]
+        public IActionResult Edit(
+            int PatientID, string Name, DateTime? Birthday, string Gender, bool? IsMarried, string Nation,
+            string IDCard, string Phone, string InsuranceNo, string WorkUnit, string Occupation,
+            string Address, string PastMedicalHistory, string DrugAllergyHistory,
+            string GuardianName, string GuardianAddress, string GuardianPhone, string GuardianRelationship,
+            string Remark)
+        {
+            try
+            {
+                int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
+                // 验证权限（确保是当前用户的信息）
+                if (!IsPatientInfoBelongToUser(PatientID, userId))
+                {
+                    TempData["Error"] = "无权限修改该患者信息！";
+                    return RedirectToAction("Index");
+                }
+
+                // 基础验证
+                if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(IDCard) || string.IsNullOrEmpty(Phone))
+                {
+                    ViewBag.Error = "姓名、身份证号、联系电话为必填项！";
+                    ViewBag.FormData = Request.Form;
+                    return View();
+                }
+
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    // 检查身份证号是否重复（排除自己）
+                    if (IsIDCardExists(IDCard, PatientID))
+                    {
+                        ViewBag.Error = "该身份证号已绑定其他患者！";
+                        ViewBag.FormData = Request.Form;
+                        return View();
+                    }
+
+                    string sql = @"
+                        UPDATE dbo.Patients SET
+                            [Name] = @Name,
+                            Birthday = @Birthday,
+                            Gender = @Gender,
+                            IsMarried = @IsMarried,
+                            Nation = @Nation,
+                            IDCard = @IDCard,
+                            Phone = @Phone,
+                            InsuranceNo = @InsuranceNo,
+                            WorkUnit = @WorkUnit,
+                            Occupation = @Occupation,
+                            [Address] = @Address,
+                            PastMedicalHistory = @PastMedicalHistory,
+                            DrugAllergyHistory = @DrugAllergyHistory,
+                            GuardianName = @GuardianName,
+                            GuardianAddress = @GuardianAddress,
+                            GuardianPhone = @GuardianPhone,
+                            GuardianRelationship = @GuardianRelationship,
+                            Remark = @Remark,
+                            UpdatedAt = GETDATE()
+                        WHERE PatientID = @PatientID AND UserId = @UserId";
+
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    // 绑定参数
+                    cmd.Parameters.AddWithValue("@PatientID", PatientID);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@Name", Name);
+                    cmd.Parameters.AddWithValue("@Birthday", Birthday ?? null);
+                    cmd.Parameters.AddWithValue("@Gender", string.IsNullOrEmpty(Gender) ? DBNull.Value : (object)Gender);
+                    cmd.Parameters.AddWithValue("@IsMarried", IsMarried ?? null);
+                    cmd.Parameters.AddWithValue("@Nation", string.IsNullOrEmpty(Nation) ? DBNull.Value : (object)Nation);
+                    cmd.Parameters.AddWithValue("@IDCard", IDCard);
+                    cmd.Parameters.AddWithValue("@Phone", Phone);
+                    cmd.Parameters.AddWithValue("@InsuranceNo", string.IsNullOrEmpty(InsuranceNo) ? DBNull.Value : (object)InsuranceNo);
+                    cmd.Parameters.AddWithValue("@WorkUnit", string.IsNullOrEmpty(WorkUnit) ? DBNull.Value : (object)WorkUnit);
+                    cmd.Parameters.AddWithValue("@Occupation", string.IsNullOrEmpty(Occupation) ? DBNull.Value : (object)Occupation);
+                    cmd.Parameters.AddWithValue("@Address", string.IsNullOrEmpty(Address) ? DBNull.Value : (object)Address);
+                    cmd.Parameters.AddWithValue("@PastMedicalHistory", string.IsNullOrEmpty(PastMedicalHistory) ? DBNull.Value : (object)PastMedicalHistory);
+                    cmd.Parameters.AddWithValue("@DrugAllergyHistory", string.IsNullOrEmpty(DrugAllergyHistory) ? DBNull.Value : (object)DrugAllergyHistory);
+                    cmd.Parameters.AddWithValue("@GuardianName", string.IsNullOrEmpty(GuardianName) ? DBNull.Value : (object)GuardianName);
+                    cmd.Parameters.AddWithValue("@GuardianAddress", string.IsNullOrEmpty(GuardianAddress) ? DBNull.Value : (object)GuardianAddress);
+                    cmd.Parameters.AddWithValue("@GuardianPhone", string.IsNullOrEmpty(GuardianPhone) ? DBNull.Value : (object)GuardianPhone);
+                    cmd.Parameters.AddWithValue("@GuardianRelationship", string.IsNullOrEmpty(GuardianRelationship) ? DBNull.Value : (object)GuardianRelationship);
+                    cmd.Parameters.AddWithValue("@Remark", string.IsNullOrEmpty(Remark) ? DBNull.Value : (object)Remark);
+
+                    int rows = cmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "患者信息修改成功！";
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        ViewBag.Error = "修改失败，请重试！";
+                        ViewBag.FormData = Request.Form;
+                        return View();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "修改患者信息出错：" + ex.Message;
+                ViewBag.FormData = Request.Form;
+                return View();
+            }
+        }
+        // 检查身份证号是否重复
+        private bool IsIDCardExists(string idCard, int excludePatientId = 0)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = "SELECT COUNT(1) FROM dbo.Patients WHERE IDCard = @IDCard";
+                if (excludePatientId > 0)
+                {
+                    sql += " AND PatientID != @ExcludePatientId";
+                }
+
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@IDCard", idCard);
+                if (excludePatientId > 0)
+                {
+                    cmd.Parameters.AddWithValue("@ExcludePatientId", excludePatientId);
+                }
+
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+        }
+        // 检查患者信息是否属于当前用户
+        private bool IsPatientInfoBelongToUser(int patientId, int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = "SELECT COUNT(1) FROM dbo.Patients WHERE PatientID = @PatientID AND UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+        }
+        // 根据ID和用户ID获取患者信息
+        private DataRow GetPatientInfoById(int patientId, int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = @"
+                    SELECT * FROM dbo.Patients 
+                    WHERE PatientID = @PatientID AND UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
+                return dt.Rows.Count > 0 ? dt.Rows[0] : null;
+            }
+        }
+        #endregion
         //注册账号后,判断是否Patient存在 UserId ，如果不存在强制填写患者注册
         // 新增：患者注册页面展示（无需登录验证，允许未注册用户访问）
         public IActionResult Register()
         {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")))
+            {
+                return RedirectToAction("Login", "Home");
+            }
             return View();
         }
         // 新增：患者注册表单提交处理
@@ -223,7 +448,7 @@ namespace COMMSMVC.Controllers
 
                     SqlCommand insertCmd = new SqlCommand(insertSql, conn);
                     // 绑定参数（优先使用当前登录用户的UserID）
-                    string userId = HttpContext.Session.GetString("UserID") ?? "0";
+                    string userId = HttpContext.Session.GetString("UserID");
                     insertCmd.Parameters.AddWithValue("@UserId", userId);
                     insertCmd.Parameters.AddWithValue("@Name", model.Name);
                     insertCmd.Parameters.AddWithValue("@Birthday", model.Birthday);

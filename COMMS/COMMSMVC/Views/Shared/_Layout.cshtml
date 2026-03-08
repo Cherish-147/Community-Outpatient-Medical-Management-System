@@ -173,9 +173,9 @@
                     </li>
 
                     <!-- 药品管理 -->
-                    <li class="nav-item">
+@*                     <li class="nav-item">
                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "active" : "")"
-                           href="#" role="button" data-bs-toggle="collapse" data-bs-target="#medicineMenu" aria-expanded="false">
+                           href="./Medication/Index" role="button" data-bs-toggle="collapse" data-bs-target="#medicineMenu" aria-expanded="false">
                             <i class="bi bi-pills me-2"></i> 药品管理
                         </a>
                         <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Medicine" ? "show" : "")" id="medicineMenu">
@@ -183,6 +183,44 @@
                                 <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Index">药品库存</a></li>
                                 <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Purchase">药品采购</a></li>
                                 <li><a class="dropdown-item" asp-controller="Medicine" asp-action="Expiry">效期提醒</a></li>
+                            </ul>
+                        </div>
+                    </li> *@
+                    <li class="nav-item">
+                        <!-- 主菜单：判断Controller为Medication时激活，且子菜单展开 -->
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Medication" ? "active" : "")"
+                           href="#" role="button" data-bs-toggle="collapse"
+                           data-bs-target="#medicineMenu"
+                           aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Medication" ? "true" : "false")">
+                            <i class="bi bi-pills me-2"></i> 药品管理
+                        </a>
+                        <!-- 子菜单：Controller为Medication时自动展开，且当前Action高亮 -->
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Medication" ? "show" : "")" id="medicineMenu">
+                            <ul class="list-unstyled ps-3">
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                       asp-controller="Medication" asp-action="Index">
+                                        <i class="bi bi-list-ul me-2"></i> 药品库存
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active fw-bold" : "")"
+                                       asp-controller="Medication" asp-action="Create">
+                                        <i class="bi bi-plus-circle me-2"></i> 新增药品
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Edit" ? "active fw-bold" : "")"
+                                       asp-controller="Medication" asp-action="Edit">
+                                        <i class="bi bi-pencil-square me-2"></i> 编辑药品
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Delete" ? "active fw-bold" : "")"
+                                       asp-controller="Medication" asp-action="Delete">
+                                        <i class="bi bi-trash me-2"></i> 删除药品
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </li>

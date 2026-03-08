@@ -1,0 +1,76 @@
+﻿@model List<Medications>
+
+@{
+    ViewData["Title"] = "药品库存";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>药品库存</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 新增药品
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>药品名称</th>
+                        <th>规格</th>
+                        <th>单价</th>
+                        <th>库存</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>最后更新</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.MedicationID</td>
+                                <td>@item.Name</td>
+                                <td>@item.Specification</td>
+                                <td>@item.Price.ToString("C")</td>
+                                <td>@item.Stock</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">停用</span>
+                                    }
+                                </td>
+                                <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd") ?? "-")</td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@item.MedicationID" class="btn btn-sm btn-warning" title="编辑">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.MedicationID" class="btn btn-sm btn-danger" title="删除"
+                                       onclick="return confirm('确定要删除该药品吗？');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">暂无药品数据</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

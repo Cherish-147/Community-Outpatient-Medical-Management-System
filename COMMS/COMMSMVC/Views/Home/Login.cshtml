@@ -6,15 +6,15 @@
  <h1>Login</h1>
 <form method="post">
 <div>
-<label>Username:</label>
+<label>用户名:</label>
 <input asp-for="Username"/>
 </div>
 
 <div>
-    <label>Password:</label>
+    <label>密  码:</label>
     <input asp-for="Password" type-"password"/>
 </div>
-<button type="submit">Login</button>
+<button type="submit">登录</button>
 
 </form>
 @if(ViewBag.Error != null){
