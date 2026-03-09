@@ -1,50 +1,53 @@
-﻿@model IEnumerable<COMMSMVC.Models.AppointmentViewModel>
+﻿@model Tuple<List<COMMSMVC.Models.MedicalRecord>, COMMSMVC.Models.Patient>
 
 @{
-    ViewData["Title"] = "就诊管理";
+    ViewData["Title"] = "病历记录管理";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>就诊记录</h1>
+<h1>患者历史病历记录</h1>
 
-<p>
+@* <p>
     <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> 查看挂号患者
+        <i class="bi bi-plus-circle"></i> 新增病历记录
     </a>
-</p>
+</p> *@
 
 <div class="table-responsive">
     <table class="table table-striped table-hover">
         <thead class="table-light">
             <tr>
+                <th>记录ID</th>
                 <th>预约ID</th>
-                <th>患者姓名</th>
-                <th>排班ID</th>
+                    <th>患者姓名</th>
+                <th>患者主诉</th>
+                <th>诊断结果</th>
+                <th>治疗方案</th>
                 <th>状态</th>
-                <th>预约时间</th>
-                <th>备注</th>
-                <th>时间段</th>
-                <th>医生ID</th>
-                <th>医生姓名</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
+            @foreach (var item in Model.Item1)
             {
                 <tr>
+                    <td>@item.RecordID</td>
                     <td>@item.AppointmentID</td>
-                    <td>@item.PatientName</td>
-                    <td>@item.ScheduleID</td>
+                    <td>@(Model.Item2 != null ? Model.Item2.Name : "未知患者")</td>
+                    <td>@item.PatientStatement</td>
+                    <td>@item.Diagnosis</td>
+                    <td>@item.Treatment</td>
                     <td>
                         @{
                             // 根据状态设置不同的徽章样式
                             string badgeClass = item.Status switch
                             {
-                                "已预约" => "bg-primary",
-                                "已到诊" => "bg-info",
-                                "已看诊" => "bg-warning text-dark",
-                                "已完成" => "bg-success",
+                                "出诊" => "bg-primary",
+                                "待诊" => "bg-warning text-dark",
+                                "复诊" => "bg-info",
+                                "完成" => "bg-success",
                                 "取消" or "已取消" => "bg-secondary",
                                 _ => "bg-secondary"
                             };
@@ -52,22 +55,19 @@
                         <span class="badge @badgeClass">@item.Status</span>
                     </td>
                     <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@(string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark)</td>
-                    <td>@item.TimeSlot</td>
-                    <td>@item.DoctorID</td>
-                    <td>@item.DoctorName</td>
+                    <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.AppointmentID" class="btn btn-sm btn-outline-info" title="详情">
+                        <a asp-action="Details" asp-route-id="@item.RecordID" class="btn btn-sm btn-outline-info" title="详情">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a asp-action="Edit" asp-route-id="@item.AppointmentID" class="btn btn-sm btn-outline-warning" title="编辑">
+                        <a asp-action="Edit" asp-route-id="@item.RecordID" class="btn btn-sm btn-outline-warning" title="编辑">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form asp-action="Delete" method="post" style="display:inline;">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@item.AppointmentID" />
+                            <input type="hidden" name="id" value="@item.RecordID" />
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="删除"
-                                    onclick="return confirm('确定要删除该就诊记录吗？');">
+                                    onclick="return confirm('确定要删除该病历记录吗？');">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -77,3 +77,9 @@
         </tbody>
     </table>
 </div>
+
+@section Scripts {
+    <script>
+        // 可以在这里添加额外的JavaScript功能
+    </script>
+}
