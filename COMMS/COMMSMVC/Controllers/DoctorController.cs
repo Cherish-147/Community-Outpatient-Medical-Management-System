@@ -54,7 +54,7 @@ namespace COMMSMVC.Controllers
             {
                 // 验证权限
                 if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
-                    (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Staff"))
+                    (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Doctor"))
                 {
                     return RedirectToAction("Login", "Home");
                 }

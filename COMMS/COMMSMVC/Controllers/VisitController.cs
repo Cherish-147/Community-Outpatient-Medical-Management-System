@@ -1,10 +1,27 @@
 ﻿using COMMSMVC.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace COMMSMVC.Controllers
 {
     public class VisitController : Controller
     {
+        // 模拟数据
+        private static readonly List<CheckItem> _checkItems = new List<CheckItem>
+        {
+            new CheckItem { CheckItemID = 1, Name = "血常规", Description = "全血细胞计数检查", Price = 30.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 2, Name = "尿常规", Description = "尿液常规检查", Price = 20.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 3, Name = "心电图", Description = "心脏电活动检查", Price = 50.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 4, Name = "B超", Description = "腹部超声波检查", Price = 120.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 5, Name = "CT扫描", Description = "计算机断层扫描", Price = 300.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 6, Name = "X光胸片", Description = "胸部X光检查", Price = 80.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 7, Name = "肝功能", Description = "肝脏功能检查", Price = 60.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 8, Name = "肾功能", Description = "肾脏功能检查", Price = 55.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 9, Name = "血糖检测", Description = "血糖水平检查", Price = 15.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
+            new CheckItem { CheckItemID = 10, Name = "血脂检测", Description = "血脂四项检查", Price = 40.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) }
+        };
+        // 模拟预约数据（从您提供的 CheckOrders 表中提取 AppointmentID）
+        private static readonly List<int> _appointmentIds = new List<int> { 1, 2, 3, 4, 5, 6, 7 };
         #region 就诊管理
         public IActionResult Index()
         {
@@ -503,7 +520,143 @@ namespace COMMSMVC.Controllers
             return View(viewModel);
            
         }
-       
+
+        //问诊、录入病历CreateMedicalRecord
+        public IActionResult CreateMedicalRecord()
+        {
+            return View();
+        }
+        [HttpPost]
+        public IActionResult CreateMedicalRecord(int appointmentId,MedicalRecord medicalRecord)
+        {
+            return View();
+        }
+
+        //开检查单
+        public IActionResult CreateCheckOrder()
+        {
+            //// 准备检查项目下拉列表（显示 Name + Description，值使用 CheckItemID）
+            //var checkItems = _context.CheckItems
+            //    .Where(ci => ci.IsActive)
+            //    .Select(ci => new
+            //    {
+            //        CheckItemID = ci.CheckItemID,
+            //        DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
+            //    })
+            //    .ToList();
+
+            //ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText");
+
+            //// 预约下拉列表保持不变（可根据需要调整）
+            //ViewBag.AppointmentID = new SelectList(_context.Appointments, "AppointmentID", "AppointmentID");
+            // 准备检查项目下拉列表（显示 Name + Description，值使用 CheckItemID）
+            var checkItems = _checkItems
+                .Where(ci => ci.IsActive)
+                .Select(ci => new
+                {
+                    CheckItemID = ci.CheckItemID,
+                    DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
+                })
+                .ToList();
+
+            ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText");
+
+            // 预约下拉列表：使用 AppointmentID 作为值和显示文本（可自定义显示格式）
+            var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"预约 #{id}" }).ToList();
+            ViewBag.AppointmentID = new SelectList(appointments, "AppointmentID", "DisplayText");
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CheckOrder checkOrder)
+        {
+            //if (ModelState.IsValid)
+            //{
+            //    checkOrder.CreatedAt = DateTime.Now;
+            //    checkOrder.Status = "已开单";
+            //    _context.Add(checkOrder);
+            //    await _context.SaveChangesAsync();
+            //    return RedirectToAction(nameof(Index));
+            //}
+
+            //// 如果验证失败，需要重新填充下拉列表（同样使用组合文本）
+            //var checkItems = _context.CheckItems
+            //    .Where(ci => ci.IsActive)
+            //    .Select(ci => new
+            //    {
+            //        CheckItemID = ci.CheckItemID,
+            //        DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
+            //    })
+            //    .ToList();
+            //ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText", checkOrder.CheckItemID);
+            //ViewBag.AppointmentID = new SelectList(_context.Appointments, "AppointmentID", "AppointmentID", checkOrder.AppointmentID);
+            if (ModelState.IsValid)
+            {
+                // 模拟保存操作（实际应存入数据库）
+                checkOrder.CreatedAt = DateTime.Now;
+                checkOrder.Status = "已开单"; // 默认状态
+
+                // 这里可以模拟保存到列表，例如：
+                // _checkOrders.Add(checkOrder); （需定义静态列表）
+
+                TempData["SuccessMessage"] = "检查单创建成功！";
+                return RedirectToAction(nameof(Index)); // 假设存在 Index 动作
+            }
+
+            // 验证失败，重新填充下拉列表
+            var checkItems = _checkItems
+                .Where(ci => ci.IsActive)
+                .Select(ci => new
+                {
+                    CheckItemID = ci.CheckItemID,
+                    DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
+                })
+                .ToList();
+            ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText", checkOrder.CheckItemID);
+
+            var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"预约 #{id}" }).ToList();
+            ViewBag.AppointmentID = new SelectList(appointments, "AppointmentID", "DisplayText", checkOrder.AppointmentID);
+
+            return View(checkOrder);
+            
+        }
+
+        // GET: CheckOrders/Index
+        public IActionResult CheckOrdersIndex()
+        {
+            // 模拟检查单数据（基于您提供的示例）
+            var checkOrders = new List<CheckOrder>
+    {
+        new CheckOrder { CheckOrderID = 1, AppointmentID = 1, CheckItemID = 1, Status = "已开单", Result = "血脂偏高", CreatedAt = new DateTime(2024, 1, 15), UpdatedAt = null },
+        new CheckOrder { CheckOrderID = 2, AppointmentID = 2, CheckItemID = 2, Status = "已检查", Result = "检查结果正常", CreatedAt = new DateTime(2024, 1, 15), UpdatedAt = new DateTime(2024, 1, 15) },
+        new CheckOrder { CheckOrderID = 3, AppointmentID = 3, CheckItemID = 3, Status = "已出报告", Result = "心电图正常", CreatedAt = new DateTime(2024, 1, 16), UpdatedAt = new DateTime(2024, 1, 16) },
+        new CheckOrder { CheckOrderID = 4, AppointmentID = 4, CheckItemID = 4, Status = "已审核", Result = "B超显示正常", CreatedAt = new DateTime(2024, 1, 16), UpdatedAt = new DateTime(2024, 1, 17) },
+        new CheckOrder { CheckOrderID = 5, AppointmentID = 5, CheckItemID = 5, Status = "已检查", Result = "CT扫描正常", CreatedAt = new DateTime(2024, 1, 20), UpdatedAt = new DateTime(2024, 1, 20) },
+        new CheckOrder { CheckOrderID = 6, AppointmentID = 6, CheckItemID = 6, Status = "已开单", Result = "X光片显示正常", CreatedAt = new DateTime(2024, 1, 17), UpdatedAt = null },
+        new CheckOrder { CheckOrderID = 7, AppointmentID = 7, CheckItemID = 6, Status = "已检查", Result = "X光片显示正常", CreatedAt = new DateTime(2024, 1, 18), UpdatedAt = new DateTime(2024, 1, 18) }
+    };
+            var patients = new List<Patient>
+    {
+        new Patient { PatientID = 1, Name = "王五" },
+        new Patient { PatientID = 2, Name = "赵六" },
+        new Patient { PatientID = 3, Name = "钱七" },
+        new Patient { PatientID = 4, Name = "孙八" },
+        new Patient { PatientID = 5, Name = "吴十" },
+        new Patient { PatientID = 6, Name = "郑十一" },
+        new Patient { PatientID = 7, Name = "王十二" },
+        new Patient { PatientID = 13, Name = "2" }  // 第13条记录，姓名为"2"（可能是测试数据）
+    };
+
+            // 构建 AppointmentID 到患者姓名的字典（假设 AppointmentID == PatientID）
+            var patientDict = patients.ToDictionary(p => p.PatientID, p => p.Name);
+            // 检查项目数据（复用之前的 _checkItems）
+            // 为了在视图中方便获取项目名称，可以将检查项目列表存入 ViewBag 或使用 Join
+            ViewBag.CheckItems = _checkItems.ToDictionary(ci => ci.CheckItemID, ci => ci.Name);
+
+            return View(checkOrders);
+        }
         #endregion
     }
 }
