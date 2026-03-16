@@ -1,6 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
+using System.Net.Http.Headers;
+using COMMSMVC.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
 namespace COMMSMVC.Controllers
 {
     public class DoctorController : Controller
@@ -10,12 +15,15 @@ namespace COMMSMVC.Controllers
         //    return View();
         //}
         //
-
+        #region 医生管理控制器
+        private readonly string baseUrl = "https://localhost:7190/api";
+        private HttpClient httpclient = new();
+        #endregion
         // 数据库连接字符串（替换为你的实际连接字符串）
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
 
-            // 1. 医生列表（查询）
-            public IActionResult Index()
+        // 1. 医生列表（查询）
+        public async Task<IActionResult> Index()
             {
                 // 验证权限：仅管理员/医院工作人员可访问
                 if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
@@ -24,22 +32,44 @@ namespace COMMSMVC.Controllers
                     return RedirectToAction("Login", "Home");
                 }
 
-                DataTable dtDoctors = new DataTable();
-                try
-                {
-                    using (SqlConnection conn = new SqlConnection(_connectionString))
-                    {
-                        conn.Open();
-                        // 关联科室表查询医生完整信息
-                        string sql = @"
-                        SELECT d.DoctorID, d.DoctorName, d.Title, d.DeptID, dp.DeptName, 
-                               d.Phone, d.[Description], d.IsActive
-                        FROM dbo.Doctors d
-                        LEFT JOIN dbo.Departments dp ON d.DeptID = dp.DeptID
-                        ORDER BY d.DoctorID DESC";
-                        SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
-                        adapter.Fill(dtDoctors);
-                    }
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken")))
+            {
+                //token 为空
+                return RedirectToAction("Login", "Home");
+            }
+            DataTable dtDoctors = new DataTable();
+            dtDoctors.Columns.Add("DoctorID", typeof(int));
+            dtDoctors.Columns.Add("DoctorName", typeof(string));
+            dtDoctors.Columns.Add("Title", typeof(string));
+            dtDoctors.Columns.Add("DeptID", typeof(int));
+            dtDoctors.Columns.Add("DeptName", typeof(string));
+            dtDoctors.Columns.Add("Phone", typeof(string));
+            dtDoctors.Columns.Add("Description", typeof(string));
+            dtDoctors.Columns.Add("IsActive", typeof(bool));
+            try
+            {
+            var token = HttpContext.Session.GetString("JwtToken");
+            using HttpClient client = new();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var doctorsList = await client.GetAsync(baseUrl + "/Doctor/GetDoctorsList");
+            var doctorsListResBody = await doctorsList.Content.ReadAsStringAsync();
+            var doctors = JsonConvert.DeserializeObject<List<GetDoctorsListResponse>>(doctorsListResBody);
+
+           
+
+            foreach (var doctor in doctors)
+            {
+                dtDoctors.Rows.Add(
+                    doctor.DoctorID,
+                    doctor.DoctorName,
+                    doctor.Title,
+                    doctor.DeptID.HasValue ? (object)doctor.DeptID.Value : DBNull.Value,
+                    doctor.DeptName ?? (object)DBNull.Value,
+                    doctor.Phone,
+                    doctor.Description,
+                    doctor.IsActive
+                );
+            }
                 }
                 catch (Exception ex)
                 {
@@ -48,9 +78,42 @@ namespace COMMSMVC.Controllers
 
                 return View(dtDoctors);
             }
+        // 1. 医生列表（查询）备份
+        public IActionResult Index1()
+        {
+            // 验证权限：仅管理员/医院工作人员可访问
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Staff"))
+            {
+                return RedirectToAction("Login", "Home");
+            }
 
-            // 2. 新增医生（页面）
-            public IActionResult Create()
+            DataTable dtDoctors = new DataTable();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    // 关联科室表查询医生完整信息
+                    string sql = @"
+                        SELECT d.DoctorID, d.DoctorName, d.Title, d.DeptID, dp.DeptName, 
+                               d.Phone, d.[Description], d.IsActive
+                        FROM dbo.Doctors d
+                        LEFT JOIN dbo.Departments dp ON d.DeptID = dp.DeptID
+                        ORDER BY d.DoctorID DESC";
+                    SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+                    adapter.Fill(dtDoctors);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "加载医生列表失败：" + ex.Message;
+            }
+
+            return View(dtDoctors);
+        }
+        // 2. 新增医生（页面）
+        public async Task<IActionResult> Create()
             {
                 // 验证权限
                 if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
@@ -60,13 +123,13 @@ namespace COMMSMVC.Controllers
                 }
 
                 // 获取科室列表供下拉选择
-                ViewBag.Departments = GetDepartments();
+                ViewBag.Departments = await GetDepartmentsAsync();
                 return View();
             }
 
             // 3. 新增医生（提交）
             [HttpPost]
-            public IActionResult Create(DoctorModel model)
+            public async Task<IActionResult> Create(DoctorModel model)
             {
                 try
                 {
@@ -74,48 +137,116 @@ namespace COMMSMVC.Controllers
                     if (string.IsNullOrEmpty(model.DoctorName) || model.DeptID == 0 || string.IsNullOrEmpty(model.Phone))
                     {
                         ViewBag.Error = "医生姓名、所属科室、联系电话为必填项！";
-                        ViewBag.Departments = GetDepartments();
+                        ViewBag.Departments = GetDepartmentsAsync();
                         return View(model);
                     }
+                using var client = new HttpClient();
+                var token = HttpContext.Session.GetString("JwtToken");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var requestData = new
+                {
+                    DoctorName = model.DoctorName,
+                    Title = string.IsNullOrEmpty(model.Title) ? DBNull.Value : (object)model.Title,
+                    DeptID = model.DeptID,
+                    Phone = model.Phone,
+                    Description = string.IsNullOrEmpty(model.Description) ? DBNull.Value : (object)model.Description,
+                    IsActive = model.IsActive ? true : false
+                };
+                // 序列化为 JSON
+                var json = JsonConvert.SerializeObject(requestData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                //发送 POST 请求
+                var response = await client.PostAsync(baseUrl+ "/Doctor/CreateDoctor", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    // 读取响应内容（字符串形式）
+                    var responseBody = await response.Content.ReadAsStringAsync();
 
-                    using (SqlConnection conn = new SqlConnection(_connectionString))
+                    // 方式1：直接解析为整数（如果 API 返回纯文本数字）
+                    if (int.TryParse(responseBody, out int rows))
                     {
-                        conn.Open();
-                        string sql = @"
-                        INSERT INTO dbo.Doctors (DoctorName, Title, DeptID, Phone, [Description], IsActive)
-                        VALUES (@DoctorName, @Title, @DeptID, @Phone, @Description, @IsActive)";
-
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@DoctorName", model.DoctorName);
-                        cmd.Parameters.AddWithValue("@Title", string.IsNullOrEmpty(model.Title) ? DBNull.Value : (object)model.Title);
-                        cmd.Parameters.AddWithValue("@DeptID", model.DeptID);
-                        cmd.Parameters.AddWithValue("@Phone", model.Phone);
-                        cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(model.Description) ? DBNull.Value : (object)model.Description);
-                        cmd.Parameters.AddWithValue("@IsActive", model.IsActive ? true:false); // 默认启用
-
-                        int rows = cmd.ExecuteNonQuery();
-                        if (rows > 0)
-                        {
-                            TempData["Success"] = "医生信息新增成功！";
-                            return RedirectToAction("Index");
-                        }
-                        else
-                        {
-                            ViewBag.Error = "新增医生失败，请重试！";
-                        }
+                        // rows 即为受影响行数，可以用于后续逻辑（如显示成功消息）
+                        TempData["Success"] = $"成功插入 {rows} 条记录";
                     }
+                    else
+                    {
+                        // 如果返回的是 JSON 数字（如 "1"），也可以用 JsonConvert 反序列化
+                        rows = JsonConvert.DeserializeObject<int>(responseBody);
+  
+          
+                    }
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "医生信息新增成功！";
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        ViewBag.Error = "新增医生失败，请重试！";
+                    }
+                }
                 }
                 catch (Exception ex)
                 {
                     ViewBag.Error = "新增医生出错：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartments();
+                ViewBag.Departments = GetDepartmentsAsync();
                 return View(model);
             }
 
-            // 4. 编辑医生（页面）
-            public IActionResult Edit(int id)
+        #region// 3. 新增医生（提交）
+        [HttpPost]
+        public IActionResult Create1(DoctorModel model)
+        {
+            try
+            {
+                // 基础验证
+                if (string.IsNullOrEmpty(model.DoctorName) || model.DeptID == 0 || string.IsNullOrEmpty(model.Phone))
+                {
+                    ViewBag.Error = "医生姓名、所属科室、联系电话为必填项！";
+                    ViewBag.Departments = GetDepartmentsAsync();
+                    return View(model);
+                }
+
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    string sql = @"
+                        INSERT INTO dbo.Doctors (DoctorName, Title, DeptID, Phone, [Description], IsActive)
+                        VALUES (@DoctorName, @Title, @DeptID, @Phone, @Description, @IsActive)";
+
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@DoctorName", model.DoctorName);
+                    cmd.Parameters.AddWithValue("@Title", string.IsNullOrEmpty(model.Title) ? DBNull.Value : (object)model.Title);
+                    cmd.Parameters.AddWithValue("@DeptID", model.DeptID);
+                    cmd.Parameters.AddWithValue("@Phone", model.Phone);
+                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(model.Description) ? DBNull.Value : (object)model.Description);
+                    cmd.Parameters.AddWithValue("@IsActive", model.IsActive ? true : false); // 默认启用
+
+                    int rows = cmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "医生信息新增成功！";
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        ViewBag.Error = "新增医生失败，请重试！";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "新增医生出错：" + ex.Message;
+            }
+
+            ViewBag.Departments = GetDepartmentsAsync();
+            return View(model);
+        }
+#endregion
+        // 4. 编辑医生（页面）
+        public IActionResult Edit(int id)
             {
                 // 验证权限
                 if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
@@ -157,7 +288,7 @@ namespace COMMSMVC.Controllers
                     ViewBag.Error = "加载医生信息失败：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartments();
+                ViewBag.Departments = GetDepartmentsAsync();
                 return View(model);
             }
 
@@ -171,7 +302,7 @@ namespace COMMSMVC.Controllers
                     if (string.IsNullOrEmpty(model.DoctorName) || model.DeptID == 0 || string.IsNullOrEmpty(model.Phone))
                     {
                         ViewBag.Error = "医生姓名、所属科室、联系电话为必填项！";
-                        ViewBag.Departments = GetDepartments();
+                        ViewBag.Departments = GetDepartmentsAsync();
                         return View(model);
                     }
 
@@ -210,7 +341,7 @@ namespace COMMSMVC.Controllers
                     ViewBag.Error = "修改医生信息出错：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartments();
+                ViewBag.Departments = GetDepartmentsAsync();
                 return View(model);
             }
 
@@ -266,18 +397,43 @@ namespace COMMSMVC.Controllers
             }
 
             // 辅助方法：获取科室列表
-            private DataTable GetDepartments()
+            private async Task<DataTable> GetDepartmentsAsync()
             {
-                DataTable dt = new DataTable();
-                using (SqlConnection conn = new SqlConnection(_connectionString))
-                {
-                    conn.Open();
-                    string sql = "SELECT DeptID, DeptName FROM dbo.Departments WHERE IsActive = 1 ORDER BY DeptID";
-                    SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
-                    adapter.Fill(dt);
-                }
-                return dt;
+            DataTable dt = new DataTable("depart");
+            dt.Columns.Add("DeptID", typeof(int));
+            dt.Columns.Add("DeptName", typeof(string));
+            var token = HttpContext.Session.GetString("JwtToken");
+            using HttpClient client = new();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var departmentsList = await client.GetAsync(baseUrl + "/Doctor/GetDepartmentsList");
+            var departmentsListResBody = await departmentsList.Content.ReadAsStringAsync();
+            var departments = JsonConvert.DeserializeObject<List<GetDepartmentsListResponse>>(departmentsListResBody);
+            foreach (var department in departments)
+            {
+                dt.Rows.Add(
+                    department.DeptID,
+                    department.DeptName
+               
+                );
             }
+            return dt;
+            }
+
+        #region // 辅助方法：获取科室列表
+        private DataTable GetDepartments1()
+        {
+            DataTable dt = new DataTable();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = "SELECT DeptID, DeptName FROM dbo.Departments WHERE IsActive = 1 ORDER BY DeptID";
+                SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+                adapter.Fill(dt);
+            }
+            return dt;
+        }
+
+        #endregion
         // 新增：排班模型类（放在DoctorController同级）
         public class ScheduleModel
         {
