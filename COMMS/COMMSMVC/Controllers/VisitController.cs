@@ -9,7 +9,7 @@ namespace COMMSMVC.Controllers
     {
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
         // 模拟数据
-        private static readonly List<CheckItem> _checkItems = new List<CheckItem>
+        private   List<CheckItem> _checkItems = new List<CheckItem>
         {
             new CheckItem { CheckItemID = 1, Name = "血常规", Description = "全血细胞计数检查", Price = 30.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
             new CheckItem { CheckItemID = 2, Name = "尿常规", Description = "尿液常规检查", Price = 20.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
@@ -22,8 +22,62 @@ namespace COMMSMVC.Controllers
             new CheckItem { CheckItemID = 9, Name = "血糖检测", Description = "血糖水平检查", Price = 15.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
             new CheckItem { CheckItemID = 10, Name = "血脂检测", Description = "血脂四项检查", Price = 40.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) }
         };
+        public virtual void GetCheckItemInfo(out List<CheckItem> checkItems)//获取所有检查单清单
+        {
+            checkItems =new List<CheckItem>();
+            string sql = @"
+                        SELECT [CheckItemID]
+                              ,[Name]
+                              ,[Description]
+                              ,[Price]
+                              ,[IsActive]
+                              ,[CreatedAt]
+                              ,[UpdatedAt]
+                          FROM [CheckItems]
+                        ";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var item = new CheckItem
+                        {
+                            CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                                          ? null
+                                          : reader.GetString(reader.GetOrdinal("Description")),
+                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                                        ? (DateTime?)null
+                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                        };
+                        checkItems.Add(item);
+                    }
+                }
+            }
+        }
         // 模拟预约数据（从您提供的 CheckOrders 表中提取 AppointmentID）
-        private static readonly List<int> _appointmentIds = new List<int> { 1, 2, 3, 4, 5, 6, 7 };
+        private List<int> _appointmentIds = new List<int> { 1, 2, 3, 4, 5, 6, 7 };
+
+        public virtual void GetAppointmentIds(out List<int> appointmentIds)
+        {
+            appointmentIds = [];
+            var appointments =new List<AppointmentViewModel>();
+            GetPatientAppointmentInfo(out appointments);
+            //法一：循环
+            foreach (var item in appointments)
+            {
+                appointmentIds.Add(item.AppointmentID);
+            }
+            //法二:LINQ
+            appointmentIds = appointments.Select(a => a.AppointmentID).ToList();
+        }
         #region 就诊管理
         public IActionResult Index()
         {
@@ -35,10 +89,65 @@ namespace COMMSMVC.Controllers
             return View(appointments);
             
         }
+        public virtual void GetTodayPatientAppointmentInfo(out List<AppointmentViewModel> appointments)
+        {
+            appointments = new List<AppointmentViewModel>();
+            //获取今天挂号人
+            string sql = @"
+            select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
+            ,s.TimeSlot,d.DoctorID,d.DoctorName
+            from Appointments a 
+            inner join Schedules s on a.ScheduleID =s.ScheduleID
+            inner join Patients p on a.PatientID = p.PatientID
+            inner join Doctors d on d.DoctorID=s.DoctorID
+            where s.[Date] >= CAST(GETDATE() AS DATE) 
+                  AND s.[Date] <  DATEADD(DAY, 1, CAST(GETDATE() AS DATE))";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        appointments.Add(new AppointmentViewModel
+                        {
+                            AppointmentID = reader.GetInt32(0),               // AppointmentID
+                            PatientID = reader.GetInt32(1),                    // PatientID
+                            PatientName = reader.GetString(2),                 // Name
+                            ScheduleID = reader.GetInt32(3),                   // ScheduleID
+                            Status = reader.GetString(4),                      // Status
+                            CreatedAt = reader.GetDateTime(5),                 // CreatedAt
+                            Remark = reader.IsDBNull(6) ? null : reader.GetString(6), // Remark
+                            TimeSlot = reader.GetString(7),                    // TimeSlot
+                            DoctorID = reader.GetInt32(8),                     // DoctorID
+                            DoctorName = reader.GetString(9)                   // DoctorName
+                        });
+                    }
+                }
+            }
+        }
         //查看当天挂号患者
         public IActionResult GetTodayPatientAppointment()
         {
-            var appointments = new List<AppointmentViewModel>();
+          var appointments = new List<AppointmentViewModel>();
+          GetTodayPatientAppointmentInfo(out appointments);
+
+            return View(appointments);
+        }
+
+        public IActionResult GetOnedayPatientAppointment(DateTime? startDate, DateTime? endDate, out List<AppointmentViewModel> appointments)
+        {
+            // 如果未输入日期，默认查询今天
+            if (!startDate.HasValue)
+                startDate = DateTime.Today;
+            if (!endDate.HasValue)
+                endDate = DateTime.Today;
+            // 注意：结束日期取用户所选日期的下一天，以保证包含所选结束日期的全天数据
+            DateTime start = startDate.Value.Date; // 确保时间部分为 00:00:00
+            DateTime end = endDate.Value.Date.AddDays(1); // 结束日期的下一天 00:00:00
+
+            appointments = new List<AppointmentViewModel>();
             //获取今天挂号人
             string sql = @"
             select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
@@ -76,7 +185,43 @@ namespace COMMSMVC.Controllers
 
             return View(appointments);
         }
+        
+        public virtual void GetPatientAppointmentInfo(out List<AppointmentViewModel> appointments)//查看全部患者挂号
+        {
+            appointments = new List<AppointmentViewModel>();
+            string sql = @"
+                        select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
+                        ,s.TimeSlot,d.DoctorID,d.DoctorName
+                        from Appointments a 
+                        inner join Schedules s on a.ScheduleID =s.ScheduleID
+                        inner join Patients p on a.PatientID = p.PatientID
+                        inner join Doctors d on d.DoctorID=s.DoctorID";
 
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        appointments.Add(new AppointmentViewModel
+                        {
+                            AppointmentID = reader.GetInt32(0),               // AppointmentID
+                            PatientID = reader.GetInt32(1),                    // PatientID
+                            PatientName = reader.GetString(2),                 // Name
+                            ScheduleID = reader.GetInt32(3),                   // ScheduleID
+                            Status = reader.GetString(4),                      // Status
+                            CreatedAt = reader.GetDateTime(5),                 // CreatedAt
+                            Remark = reader.IsDBNull(6) ? null : reader.GetString(6), // Remark
+                            TimeSlot = reader.GetString(7),                    // TimeSlot
+                            DoctorID = reader.GetInt32(8),                     // DoctorID
+                            DoctorName = reader.GetString(9)                   // DoctorName
+                        });
+                    }
+                }
+            }
+        }
         //查看全部患者挂号
         public IActionResult GetPatientAppointment()
         {
@@ -215,38 +360,7 @@ namespace COMMSMVC.Controllers
     }
 };
             #endregion
-            string sql = @"
-                        select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
-                        ,s.TimeSlot,d.DoctorID,d.DoctorName
-                        from Appointments a 
-                        inner join Schedules s on a.ScheduleID =s.ScheduleID
-                        inner join Patients p on a.PatientID = p.PatientID
-                        inner join Doctors d on d.DoctorID=s.DoctorID";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        appointments.Add(new AppointmentViewModel
-                        {
-                            AppointmentID = reader.GetInt32(0),               // AppointmentID
-                            PatientID = reader.GetInt32(1),                    // PatientID
-                            PatientName = reader.GetString(2),                 // Name
-                            ScheduleID = reader.GetInt32(3),                   // ScheduleID
-                            Status = reader.GetString(4),                      // Status
-                            CreatedAt = reader.GetDateTime(5),                 // CreatedAt
-                            Remark = reader.IsDBNull(6) ? null : reader.GetString(6), // Remark
-                            TimeSlot = reader.GetString(7),                    // TimeSlot
-                            DoctorID = reader.GetInt32(8),                     // DoctorID
-                            DoctorName = reader.GetString(9)                   // DoctorName
-                        });
-                    }
-                }
-            }
+            GetPatientAppointmentInfo(out appointments);
 
             return View(appointments);
         }
@@ -508,109 +622,10 @@ namespace COMMSMVC.Controllers
     }
 };
             #endregion
-            string sql = @"
-SELECT  [PatientID]
-      ,[UserId]
-      ,[Name]
-      ,[Birthday]
-      ,[Gender]
-      ,[IDCard]
-      ,[Phone]
-      ,[InsuranceNo]
-      ,[CreatedAt]
-      ,[UpdatedAt]
-      ,[IsMarried]
-      ,[Nation]
-      ,[WorkUnit]
-      ,[Occupation]
-      ,[Address]
-      ,[PastMedicalHistory]
-      ,[DrugAllergyHistory]
-      ,[GuardianName]
-      ,[GuardianRelationship]
-      ,[GuardianAddress]
-      ,[GuardianPhone]
-      ,[Remark]
-  FROM [Patients]
-";
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var patient = new Patient
-                        {
-                            PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
-                            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday"))
-                                        ? (DateTime?)null
-                                        : reader.GetDateTime(reader.GetOrdinal("Birthday")),
-                            Gender = reader.IsDBNull(reader.GetOrdinal("Gender"))
-                                     ? null
-                                     : reader.GetString(reader.GetOrdinal("Gender")),
-                            IDCard = reader.IsDBNull(reader.GetOrdinal("IDCard"))
-                                     ? null
-                                     : reader.GetString(reader.GetOrdinal("IDCard")),
-                            Phone = reader.IsDBNull(reader.GetOrdinal("Phone"))
-                                    ? null
-                                    : reader.GetString(reader.GetOrdinal("Phone")),
-                            InsuranceNo = reader.IsDBNull(reader.GetOrdinal("InsuranceNo"))
-                                          ? null
-                                          : reader.GetString(reader.GetOrdinal("InsuranceNo")),
-                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
-                                        ? (DateTime?)null
-                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                            IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried"))
-                                        ? (bool?)null
-                                        : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
-                            Nation = reader.IsDBNull(reader.GetOrdinal("Nation"))
-                                     ? null
-                                     : reader.GetString(reader.GetOrdinal("Nation")),
-                            WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit"))
-                                       ? null
-                                       : reader.GetString(reader.GetOrdinal("WorkUnit")),
-                            Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation"))
-                                         ? null
-                                         : reader.GetString(reader.GetOrdinal("Occupation")),
-                            Address = reader.IsDBNull(reader.GetOrdinal("Address"))
-                                      ? null
-                                      : reader.GetString(reader.GetOrdinal("Address")),
-                            PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory"))
-                                                 ? null
-                                                 : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
-                            DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory"))
-                                                 ? null
-                                                 : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
-                            GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName"))
-                                           ? null
-                                           : reader.GetString(reader.GetOrdinal("GuardianName")),
-                            GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship"))
-                                                   ? null
-                                                   : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
-                            GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress"))
-                                              ? null
-                                              : reader.GetString(reader.GetOrdinal("GuardianAddress")),
-                            GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone"))
-                                            ? null
-                                            : reader.GetString(reader.GetOrdinal("GuardianPhone")),
-                            Remark = reader.IsDBNull(reader.GetOrdinal("Remark"))
-                                     ? null
-                                     : reader.GetString(reader.GetOrdinal("Remark"))
-                        };
-                        patients.Add(patient);
-                    }
-                }
-            }
-         
+            GetPatientsInfo(out patients);
             return View(patients);
            
         }
-        //获取所有患者信息方法给别人调用
         public virtual void GetPatientsInfo(out List<Patient> patients )
         {
             patients = new List<Patient>();
@@ -712,10 +727,10 @@ SELECT  [PatientID]
                     }
                 }
             }
-        }
+        }//获取所有患者信息
 
-        //获取某个患者信息
-        public virtual void GetPatientByIdInfo(int patientid, out List<Patient> patientList)
+        
+        public virtual void GetPatientByIdInfo(int patientid, out List<Patient> patientList)//获取某个患者信息
         {
             patientList = new List<Patient>();
             string sql = @"
@@ -951,7 +966,7 @@ SELECT  [PatientID]
         //查看某个患者病历记录
         public IActionResult GetPatientMedicalRecordById(int patientid) 
         {
-            
+            //这个到时重新改改设计一下
             var patientList = new List<Patient>
 {
     new Patient
@@ -979,10 +994,10 @@ SELECT  [PatientID]
         GuardianPhone = null,
         Remark = null
     } };
-            GetPatientsInfo(out patientList);//获取所有患者信息
+          
 
             var patient = patientList.FirstOrDefault();
-            GetPatientByIdInfo(patientid, out patientList);
+        
 
             #region 某个患者记录
             var medicalRecord = new List<MedicalRecord>
@@ -1000,14 +1015,17 @@ SELECT  [PatientID]
     }
 };
             #endregion
-            GetMedicalRecordByPatientId(patientid, out medicalRecord);
+            GetPatientsInfo(out patientList);//获取所有患者信息
+            GetPatientByIdInfo(patientid, out patientList);//获取某个患者信息
+            patient =patientList.FirstOrDefault();
+            GetMedicalRecordByPatientId(patientid, out medicalRecord);//获取某个患者病历记录
 
               // 创建一个包含患者姓名和医疗记录的视图模型
               var viewModel = new Tuple<List<MedicalRecord>, Patient>(medicalRecord, patient);
             return View(viewModel);
            
         }
-        //某种患者病历记录
+        
         public virtual void GetMedicalRecordByPatientId(int patientId, out List<MedicalRecord> medicalRecordList)
         {
             medicalRecordList = new List<MedicalRecord>();
@@ -1053,7 +1071,7 @@ SELECT  [PatientID]
                     }
                 }
             }
-        }
+        }//某种患者病历记录
         //问诊、录入病历CreateMedicalRecord
         public IActionResult CreateMedicalRecord()
         {
@@ -1083,6 +1101,9 @@ SELECT  [PatientID]
             //// 预约下拉列表保持不变（可根据需要调整）
             //ViewBag.AppointmentID = new SelectList(_context.Appointments, "AppointmentID", "AppointmentID");
             // 准备检查项目下拉列表（显示 Name + Description，值使用 CheckItemID）
+            //这个也要好好设计
+            _checkItems = new List<CheckItem>();
+            GetCheckItemInfo(out _checkItems);
             var checkItems = _checkItems
                 .Where(ci => ci.IsActive)
                 .Select(ci => new
@@ -1095,7 +1116,10 @@ SELECT  [PatientID]
             ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText");
 
             // 预约下拉列表：使用 AppointmentID 作为值和显示文本（可自定义显示格式）
-            var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"预约 #{id}" }).ToList();
+            _appointmentIds = new List<int>();
+            GetAppointmentIds(out _appointmentIds);
+
+            var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"挂号#{id}" }).ToList();
             ViewBag.AppointmentID = new SelectList(appointments, "AppointmentID", "DisplayText");
 
             return View();
@@ -1138,6 +1162,8 @@ SELECT  [PatientID]
                 return RedirectToAction(nameof(Index)); // 假设存在 Index 动作
             }
 
+            _checkItems = new List<CheckItem>();
+            GetCheckItemInfo(out _checkItems);
             // 验证失败，重新填充下拉列表
             var checkItems = _checkItems
                 .Where(ci => ci.IsActive)
