@@ -137,7 +137,7 @@ namespace COMMSMVC.Controllers
                     if (string.IsNullOrEmpty(model.DoctorName) || model.DeptID == 0 || string.IsNullOrEmpty(model.Phone))
                     {
                         ViewBag.Error = "医生姓名、所属科室、联系电话为必填项！";
-                        ViewBag.Departments = GetDepartmentsAsync();
+                        ViewBag.Departments = await GetDepartmentsAsync();
                         return View(model);
                     }
                 using var client = new HttpClient();
@@ -191,7 +191,7 @@ namespace COMMSMVC.Controllers
                     ViewBag.Error = "新增医生出错：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartmentsAsync();
+                ViewBag.Departments = await GetDepartmentsAsync();
                 return View(model);
             }
 
@@ -246,7 +246,7 @@ namespace COMMSMVC.Controllers
         }
 #endregion
         // 4. 编辑医生（页面）
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
             {
                 // 验证权限
                 if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
@@ -288,13 +288,13 @@ namespace COMMSMVC.Controllers
                     ViewBag.Error = "加载医生信息失败：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartmentsAsync();
+            ViewBag.Departments = await GetDepartmentsAsync();
                 return View(model);
             }
 
             // 5. 编辑医生（提交）
             [HttpPost]
-            public IActionResult Edit(DoctorModel model)
+            public async Task<IActionResult> Edit(DoctorModel model)
             {
                 try
                 {
@@ -302,7 +302,7 @@ namespace COMMSMVC.Controllers
                     if (string.IsNullOrEmpty(model.DoctorName) || model.DeptID == 0 || string.IsNullOrEmpty(model.Phone))
                     {
                         ViewBag.Error = "医生姓名、所属科室、联系电话为必填项！";
-                        ViewBag.Departments = GetDepartmentsAsync();
+                        ViewBag.Departments = await GetDepartmentsAsync();
                         return View(model);
                     }
 
@@ -341,7 +341,7 @@ namespace COMMSMVC.Controllers
                     ViewBag.Error = "修改医生信息出错：" + ex.Message;
                 }
 
-                ViewBag.Departments = GetDepartmentsAsync();
+                ViewBag.Departments = await GetDepartmentsAsync();
                 return View(model);
             }
 

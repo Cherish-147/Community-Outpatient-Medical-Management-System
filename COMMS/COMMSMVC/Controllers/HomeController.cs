@@ -24,6 +24,11 @@ namespace COMMSMVC.Controllers
             // 从数据库查询今日挂号数
             //ViewData["TodayRegistrationCount"] = _registrationService.GetTodayCount();
             // 其他数据查询...
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
+                (HttpContext.Session.GetString("Role") != "Admin" && HttpContext.Session.GetString("Role") != "Doctor"))
+            {
+                return RedirectToAction("Login", "Home");
+            }
             return View();
         }
 
@@ -73,7 +78,18 @@ namespace COMMSMVC.Controllers
                 HttpContext.Session.SetString("Username",tokenInfo.UserName );
                 HttpContext.Session.SetString("Role",tokenInfo.Role );
                 HttpContext.Session.SetString("JwtToken", tokenInfo.JWTToken);
-                return RedirectToAction("Index", "Home");
+
+                if (HttpContext.Session.GetString("Role") == "Admin" || HttpContext.Session.GetString("Role") == "Doctor")
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+                else if (HttpContext.Session.GetString("Role") == "Patient")
+                {
+                
+                    //int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
+
+                        return RedirectToAction("Register", "Patient");
+                }
             }
             ViewBag.Error = "用户名或密码错误";
             return View(model);
