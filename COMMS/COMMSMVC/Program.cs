@@ -1,4 +1,6 @@
+using COMMSMVC.Properties.Configurations;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace COMMSMVC
 {
@@ -18,6 +20,9 @@ namespace COMMSMVC
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
+           
+            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, errors) => true; // 全局忽略 SSL 证书错误（仅用于开发测试！）
+            //builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
