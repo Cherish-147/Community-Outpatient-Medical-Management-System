@@ -79,7 +79,7 @@
 </style>
 
 <div class="form-container">
-    <h2 class="form-title">今日所有患者预约列表</h2>
+    <h2 class="form-title">今日预约列表</h2>
 
     @if (Model == null || Model.Count == 0)
     {
@@ -121,14 +121,8 @@
                         </td>
                         <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@(string.IsNullOrEmpty(item.Remark) ? "—" : item.Remark)</td>
-                        @*<td>
+                        <td>
                             <a asp-action="Details" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看</a>
-                        </td>*@
-                        <td>
-                            <a asp-action="CallNumber" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">叫号</a>
-                        </td>
-                        <td>
-                            <a asp-action="GetPatientById" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看患者信息</a>
                         </td>
                     </tr>
                 }

@@ -56,6 +56,17 @@ namespace COMMSMVC.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(COMMSMVC.Models.LoginRequest model)
         {
+
+            if (model.Username == null)//自动输入密码管理员，后面要删，方便测试
+            {
+                model.Username = "Admin";
+                model.Password = "123";
+            }
+            else if (model.Username == "蔡文姬")
+
+            {
+                model.Password = "2";
+            }
             using HttpClient httpclient = new(); 
             var json = JsonSerializer.Serialize(model); 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
