@@ -1,8 +1,6 @@
 using COMMSMVC.Models;
-using COMMSMVC.Properties.Configurations;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,11 +18,6 @@ namespace COMMSMVC.Controllers
         {
             _logger = logger;
         }
-        //private readonly ApiSettings _apiSettings;
-        //public HomeController(IOptions<ApiSettings> apiSettings)
-        //{
-        //    _apiSettings = apiSettings.Value;
-        //}
 
         public IActionResult Index()
         {
@@ -59,31 +52,11 @@ namespace COMMSMVC.Controllers
         {
             return View();
         }
-        //private  string baseUrl = "https://localhost:7190/api";
-        private string baseUrl = AppConfig.BaseUrl; // 直接静态调用
-
+        private readonly string baseUrl = "https://localhost:7190/api";
         [HttpPost]
         public async Task<IActionResult> Login(COMMSMVC.Models.LoginRequest model)
         {
-
-            if (model.Username == null)//自动输入密码管理员，后面要删，方便测试
-            {
-                model.Username = "Admin";
-                model.Password = "123";
-            }
-            else if (model.Username == "蔡文姬")
-
-            {
-                model.Password = "2";
-            }
-
-
-            var handler = new HttpClientHandler
-            {
-                // 接受任何服务器证书（仅用于开发测试）
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            };
-            using var httpclient = new HttpClient(handler);
+            using HttpClient httpclient = new(); 
             var json = JsonSerializer.Serialize(model); 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             //var jsonContent = new StringContent(Isonserializer.Serialize(model), Encoding.UTF8, "application/json");

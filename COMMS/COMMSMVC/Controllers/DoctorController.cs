@@ -6,7 +6,6 @@ using COMMSMVC.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
-using COMMSMVC.Properties.Configurations;
 namespace COMMSMVC.Controllers
 {
     public class DoctorController : Controller
@@ -17,12 +16,11 @@ namespace COMMSMVC.Controllers
         //}
         //
         #region 医生管理控制器
-        //private  string baseUrl = "https://localhost:7190/api";
-        private string baseUrl = AppConfig.BaseUrl; // 直接静态调用
+        private readonly string baseUrl = "https://localhost:7190/api";
         private HttpClient httpclient = new();
         #endregion
         // 数据库连接字符串（替换为你的实际连接字符串）
-        private  string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
+        private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
 
         // 1. 医生列表（查询）
         public async Task<IActionResult> Index()
