@@ -133,7 +133,7 @@
             <label asp-for="AppointmentID" class="form-label">
                 预约ID<span class="required-mark">*</span>
             </label>
-            <input asp-for="AppointmentID" class="form-control" placeholder="请输入关联的预约编号" />
+            <input asp-for="AppointmentID" class="form-control" placeholder="请输入关联的预约编号" value="@Model.AppointmentID" readonly />
             <span asp-validation-for="AppointmentID" class="text-danger"></span>
             <small class="form-text text-muted" style="color: #6c757d;">请输入关联的预约编号</small>
         </div>

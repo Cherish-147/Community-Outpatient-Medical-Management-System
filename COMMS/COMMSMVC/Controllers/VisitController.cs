@@ -1158,8 +1158,9 @@ where  AppointmentID =@AppointmentID";
             GetPatientByIdInfo(patientId, out patient);
             return View(patient);
         }
-       
 
+
+        [HttpGet("Visit/GetPatientMedicalRecordById/{patientid}")]
         public IActionResult GetPatientMedicalRecordById(int patientid)  //查看某个患者病历记录
         {
             //这个到时重新改改设计一下
@@ -1269,15 +1270,71 @@ where  AppointmentID =@AppointmentID";
             }
         }//某种患者病历记录
         //问诊、录入病历CreateMedicalRecord
-        public IActionResult CreateMedicalRecord()
+        public IActionResult CreateMedicalRecord(int id)
         {
-            return View();
+            int appointmentId = id;
+            if(id == 0)
+            {
+                TempData["ErrorMessage"] =("挂号ID无效，不能为0！");
+            }
+
+            var medicalRecord = new MedicalRecord
+            {
+                AppointmentID = appointmentId
+            };
+          
+            return View(medicalRecord);
         }
         [HttpPost]
-        public IActionResult CreateMedicalRecord(int appointmentId,MedicalRecord medicalRecord)
+        public async Task<IActionResult> CreateMedicalRecord(int appointmentId, MedicalRecord createMedicalRecord)
         {
-            return View();
+            createMedicalRecord = new MedicalRecord();
+            try
+            {
+                await InsertMedicalRecordAsync(createMedicalRecord);
+                TempData["SuccessMessage"] = "录入病历成功！";
+                return RedirectToAction("CallNumberIndex", new { appointmentId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"录入病历失败：{ex.Message}";
+                return View();
+            }
         }
+        #region 插入MedicalRecords方法  
+        public virtual async Task InsertMedicalRecordAsync(MedicalRecord medicalRecord)
+        {
+            string InsertSql = @"INSERT INTO dbo.MedicalRecords (AppointmentID, PatientStatement, Diagnosis, Treatment, [Status], CreatedAt, UpdatedAt)  
+                               VALUES   
+                               (@AppointmentID, @PatientStatement, @Diagnosis, @Treatment, @Status, @CreatedAt, @UpdatedAt)";
+            try
+            {
+                using (var conn = new SqlConnection(_connectionString))
+                using (var cmd = new SqlCommand(InsertSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AppointmentID", medicalRecord.AppointmentID);
+                    cmd.Parameters.AddWithValue("@PatientStatement", medicalRecord.PatientStatement ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Diagnosis", medicalRecord.Diagnosis ?? "");
+                    cmd.Parameters.AddWithValue("@Treatment", medicalRecord.Treatment ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Status", medicalRecord.Status ?? "");
+                    cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@UpdatedAt", medicalRecord.UpdatedAt ?? (object)DBNull.Value);
+
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                    if (rowsAffected == 0)
+                    {
+                        throw new Exception("插入病历记录失败，未影响任何行。");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("插入病历记录时发生错误。", ex);
+            }
+        }
+        #endregion
 
         //开检查单
         public IActionResult CreateCheckOrder()
