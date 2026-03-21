@@ -1,5 +1,8 @@
 ﻿@model List<COMMSMVC.Models.AppointmentViewModel>
-
+@{
+    ViewData["Title"] = "今日某患者预约列表";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 <style>
     /* 你提供的样式 */
     .form-container {
@@ -100,6 +103,10 @@
                     <th>预约时间</th>
                     <th>备注</th>
                     <th>操作</th>
+                    <th>操作</th>
+                    <th>操作</th>
+                    <th>操作</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,22 +128,32 @@
                         </td>
                         <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@(string.IsNullOrEmpty(item.Remark) ? "—" : item.Remark)</td>
-                        @*<td>
-                            <a asp-action="Details" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看</a>
-                        </td>*@
-                        <td>
-                            <a asp-action="CallNumber" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">叫号</a>
-                        </td>
+
                         <td>
                             <a asp-action="GetPatientById" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看患者信息</a>
                         </td>
+                        <td>
+                            <a asp-action="查看历史病历" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看历史病历</a>
+                        </td>
+                        <td>
+                            <a asp-action="录入病历" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">录入病历</a>
+                        </td>
+                        <td>
+                            <a asp-action="开检查单" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">开检查单</a>
+                        </td>
+                        <td>
+                            <a asp-action="开处方" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">开处方</a>
+                        </td>
+
+
+       
                     </tr>
                 }
             </tbody>
         </table>
     }
 
-    <div>
+@*     <div>
         <a asp-action="Index" class="btn-back">← 返回首页</a>
-    </div>
+    </div> *@
 </div>

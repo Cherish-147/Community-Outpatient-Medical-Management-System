@@ -228,7 +228,7 @@ namespace COMMSMVC.Controllers
         {
            var  appointment = new List<AppointmentViewModel>() ;
             GetOnePatientAppointmentInfo(appointmentID, out appointment);
-            return View(appointmentID);
+            return View(appointment);
         }
         public virtual void GetOnePatientAppointmentInfo(int appointmentID,out List<AppointmentViewModel> appointment)//查看一个患者挂号
         {
@@ -245,11 +245,11 @@ namespace COMMSMVC.Controllers
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {
+            {cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
+                    
                     while (reader.Read())
                     {
                         appointment.Add(new AppointmentViewModel
@@ -936,25 +936,7 @@ where  AppointmentID =@AppointmentID";
 
         }
         [HttpPost]
-        //public IActionResult CallNumber(int appointmentID,string status)//医生叫号
-        //{
-        //    status = "已叫号";
-        //    string updateSql = @"	update Appointments set [Status] =@Status where AppointmentID =@AppointmentID ";
-        //    using (SqlConnection conn = new SqlConnection(_connectionString))
-        //    using (SqlCommand cmd = new SqlCommand(updateSql, conn))
-        //    {
-        //        cmd.Parameters.AddWithValue("@Status", status);
-        //        cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
-        //        conn.Open();
-        //        using (SqlDataReader reader = cmd.ExecuteReader())
-        //        {
-
-
-        //        }
-        //    }
-        //    return View();
-        //}
-        public async Task<IActionResult> CallNumber(int appointmentID, string status)
+        public async Task<IActionResult> CallNumber(int appointmentID, string status)//医生叫号
         {
              status = "已叫号";
             string updateSql = @"UPDATE Appointments SET [Status] = @Status WHERE AppointmentID = @AppointmentID";
@@ -975,13 +957,14 @@ where  AppointmentID =@AppointmentID";
                         // 没有找到对应的预约
                         ModelState.AddModelError("", "未找到指定的预约，请确认预约ID是否正确。");
                         ViewBag.AppointmentID = appointmentID;
-                        return View();
+                        // 重定向回 GET 页面，以便显示错误
+                        return RedirectToAction("CallNumberIndex", new { appointmentID });
                     }
                 }
 
                 // 更新成功后，可以重定向到其他页面（如预约列表）
                 TempData["SuccessMessage"] = "叫号成功！";
-                return View(); // 假设有一个预约列表页面
+                return RedirectToAction("CallNumberIndex", new { appointmentID });
             }
             catch (SqlException ex)
             {
@@ -989,10 +972,62 @@ where  AppointmentID =@AppointmentID";
                 ModelState.AddModelError("", "数据库操作失败，请稍后重试。");
                 // 开发环境下可以显示详细错误（可选）
                 ViewBag.AppointmentID = appointmentID;
-                return View();
+                return RedirectToAction("CallNumberIndex", new { appointmentID });
             }
         
 }
+
+        public async Task<IActionResult> CallNumberIndex(int appointmentID)//确认医生叫号返回的显示页
+        {
+            var viewModel = new CallNumberViewModel();
+            string sql = @"select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
+,s.TimeSlot,d.DoctorID,d.DoctorName
+from Appointments a 
+inner join Schedules s on a.ScheduleID =s.ScheduleID
+inner join Patients p on a.PatientID = p.PatientID
+inner join Doctors d on d.DoctorID=s.DoctorID
+where  AppointmentID =@AppointmentID";
+            try
+            {
+                using (var conn = new SqlConnection(_connectionString))
+                using (var cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
+                    await conn.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            viewModel.AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID"));
+                            viewModel.PatientID = reader.GetInt32(reader.GetOrdinal("PatientID"));
+                            viewModel.PatientName = reader.GetString(reader.GetOrdinal("Name"));
+                            viewModel.ScheduleID = reader.GetInt32(reader.GetOrdinal("ScheduleID"));
+                            viewModel.Status = reader.GetString(reader.GetOrdinal("Status"));
+                            viewModel.CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"));
+                            viewModel.Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? "" : reader.GetString(reader.GetOrdinal("Remark"));
+                            viewModel.TimeSlot = reader.GetString(reader.GetOrdinal("TimeSlot"));
+                            viewModel.DoctorID = reader.GetInt32(reader.GetOrdinal("DoctorID"));
+                            viewModel.DoctorName = reader.GetString(reader.GetOrdinal("DoctorName"));
+                        }
+                        else
+                        {
+                            // 没有找到该预约
+                            return NotFound($"未找到 ID 为 {appointmentID} 的预约。");
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                // 记录日志（假设有 ILogger）
+                // _logger.LogError(ex, "数据库查询失败");
+                return StatusCode(500, "服务器内部错误，请稍后重试。");
+            }
+
+            return View(viewModel);
+
+        }
         [HttpGet("Visit/GetPatientById/{patientId}")]
         public IActionResult GetPatientById(int patientId)//查看某个患者所有信息
         {
