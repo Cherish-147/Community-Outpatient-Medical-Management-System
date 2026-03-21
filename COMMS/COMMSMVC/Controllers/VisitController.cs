@@ -2,14 +2,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Data.SqlClient;
+using System.Reflection;
 
 namespace COMMSMVC.Controllers
 {
     public class VisitController : Controller
     {
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
-        // 模拟数据
-        private   List<CheckItem> _checkItems = new List<CheckItem>
+        #region// 模拟数据
+        private List<CheckItem> _checkItems = new List<CheckItem>
         {
             new CheckItem { CheckItemID = 1, Name = "血常规", Description = "全血细胞计数检查", Price = 30.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
             new CheckItem { CheckItemID = 2, Name = "尿常规", Description = "尿液常规检查", Price = 20.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
@@ -22,9 +23,10 @@ namespace COMMSMVC.Controllers
             new CheckItem { CheckItemID = 9, Name = "血糖检测", Description = "血糖水平检查", Price = 15.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) },
             new CheckItem { CheckItemID = 10, Name = "血脂检测", Description = "血脂四项检查", Price = 40.00m, IsActive = true, CreatedAt = new DateTime(2024, 1, 1) }
         };
-        public virtual void GetCheckItemInfo(out List<CheckItem> checkItems)//获取所有检查单清单
+        #endregion
+        public virtual void GetCheckItemInfo(out List<CheckItem> checkItems)//方法-获取所有检查单清单
         {
-            checkItems =new List<CheckItem>();
+            checkItems = new List<CheckItem>();
             string sql = @"
                         SELECT [CheckItemID]
                               ,[Name]
@@ -62,13 +64,14 @@ namespace COMMSMVC.Controllers
                 }
             }
         }
-        // 模拟预约数据（从您提供的 CheckOrders 表中提取 AppointmentID）
+        #region// 模拟预约数据（从您提供的 CheckOrders 表中提取 AppointmentID）
         private List<int> _appointmentIds = new List<int> { 1, 2, 3, 4, 5, 6, 7 };
+        #endregion
 
-        public virtual void GetAppointmentIds(out List<int> appointmentIds)
+        public virtual void GetAppointmentIds(out List<int> appointmentIds)//方法，获取预约Id List
         {
             appointmentIds = [];
-            var appointments =new List<AppointmentViewModel>();
+            var appointments = new List<AppointmentViewModel>();
             GetPatientAppointmentInfo(out appointments);
             //法一：循环
             foreach (var item in appointments)
@@ -87,9 +90,9 @@ namespace COMMSMVC.Controllers
         // ... 继续添加其他示例数据（为简洁省略，实际从数据库获取）
     };
             return View(appointments);
-            
+
         }
-        public virtual void GetTodayPatientAppointmentInfo(out List<AppointmentViewModel> appointments)
+        public virtual void GetTodayPatientAppointmentInfo(out List<AppointmentViewModel> appointments) //方法-获取今天挂号人
         {
             appointments = new List<AppointmentViewModel>();
             //获取今天挂号人
@@ -128,15 +131,15 @@ namespace COMMSMVC.Controllers
             }
         }
         //查看当天挂号患者
-        public IActionResult GetTodayPatientAppointment()
+        public IActionResult GetTodayPatientAppointment()//控制器-获取今天挂号人
         {
-          var appointments = new List<AppointmentViewModel>();
-          GetTodayPatientAppointmentInfo(out appointments);
+            var appointments = new List<AppointmentViewModel>();
+            GetTodayPatientAppointmentInfo(out appointments);
 
             return View(appointments);
         }
 
-        public IActionResult GetOnedayPatientAppointment(DateTime? startDate, DateTime? endDate, out List<AppointmentViewModel> appointments)
+        public IActionResult GetOnedayPatientAppointment(DateTime? startDate, DateTime? endDate, out List<AppointmentViewModel> appointments)//控制器获取某天挂号人
         {
             // 如果未输入日期，默认查询今天
             if (!startDate.HasValue)
@@ -185,8 +188,8 @@ namespace COMMSMVC.Controllers
 
             return View(appointments);
         }
-        
-        public virtual void GetPatientAppointmentInfo(out List<AppointmentViewModel> appointments)//查看全部患者挂号
+
+        public virtual void GetPatientAppointmentInfo(out List<AppointmentViewModel> appointments)//方法-查看全部患者挂号
         {
             appointments = new List<AppointmentViewModel>();
             string sql = @"
@@ -224,13 +227,13 @@ namespace COMMSMVC.Controllers
         }
 
         [HttpGet("/Visit/GetPatientAppointmentById/{appointmentID}")]
-        public IActionResult GetPatientAppointmentById(int appointmentID)//这个患者挂号信息
+        public IActionResult GetPatientAppointmentById(int appointmentID)//控制器-这个患者挂号信息
         {
-           var  appointment = new List<AppointmentViewModel>() ;
+            var appointment = new List<AppointmentViewModel>();
             GetOnePatientAppointmentInfo(appointmentID, out appointment);
             return View(appointment);
         }
-        public virtual void GetOnePatientAppointmentInfo(int appointmentID,out List<AppointmentViewModel> appointment)//查看一个患者挂号
+        public virtual void GetOnePatientAppointmentInfo(int appointmentID, out List<AppointmentViewModel> appointment)//方法-查看一个患者挂号
         {
             appointment = [];
             string sql = @"
@@ -245,11 +248,12 @@ namespace COMMSMVC.Controllers
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
+            {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    
+
                     while (reader.Read())
                     {
                         appointment.Add(new AppointmentViewModel
@@ -269,7 +273,7 @@ namespace COMMSMVC.Controllers
                 }
             }
         }
-        public IActionResult GetPatientAppointment() //查看全部患者挂号
+        public IActionResult GetPatientAppointment() //控制器--查看全部患者挂号
         {
             #region 挂号患者 数据
             var appointments = new List<AppointmentViewModel>
@@ -410,8 +414,8 @@ namespace COMMSMVC.Controllers
 
             return View(appointments);
         }
-        //查看患者所有信息
-        public IActionResult GetPatients()
+        
+        public IActionResult GetPatients()//控制器--查看患者所有信息
         {
             #region 所有患者信息
             var patients = new List<Patient>
@@ -670,9 +674,9 @@ namespace COMMSMVC.Controllers
             #endregion
             GetPatientsInfo(out patients);
             return View(patients);
-           
+
         }
-        public virtual void GetPatientsInfo(out List<Patient> patients )
+        public virtual void GetPatientsInfo(out List<Patient> patients)//方法，获取所有患者信息
         {
             patients = new List<Patient>();
             string sql = @"
@@ -775,8 +779,8 @@ SELECT  [PatientID]
             }
         }//获取所有患者信息
 
-        
-        public virtual void GetPatientByIdInfo(int patientId, out List<Patient> patientList)//获取某个患者信息
+
+        public virtual void GetPatientByIdInfo(int patientId, out List<Patient> patientList)//方法--获取某个患者信息
         {
             patientList = new List<Patient>();
             string sql = @"
@@ -884,7 +888,7 @@ Where PatientID =@PatientID
         }
 
         [HttpGet("Visit/CallNumber/{appointmentID}")]
-        public async Task<IActionResult> CallNumber(int appointmentID)//医生叫号
+        public async Task<IActionResult> CallNumber(int appointmentID)//控制器--医生叫号
         {
             var viewModel = new CallNumberViewModel();
             string sql = @"select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
@@ -936,9 +940,9 @@ where  AppointmentID =@AppointmentID";
 
         }
         [HttpPost]
-        public async Task<IActionResult> CallNumber(int appointmentID, string status)//医生叫号
+        public async Task<IActionResult> CallNumber(int appointmentID, string status)//控制器--提交医生叫号
         {
-             status = "已叫号";
+            status = "已叫号";
             string updateSql = @"UPDATE Appointments SET [Status] = @Status WHERE AppointmentID = @AppointmentID";
 
             try
@@ -974,10 +978,10 @@ where  AppointmentID =@AppointmentID";
                 ViewBag.AppointmentID = appointmentID;
                 return RedirectToAction("CallNumberIndex", new { appointmentID });
             }
-        
-}
 
-        public async Task<IActionResult> CallNumberIndex(int appointmentID)//确认医生叫号返回的显示页
+        }
+
+        public async Task<IActionResult> CallNumberIndex(int appointmentID)//控制器--确认医生叫号返回的显示页
         {
             var viewModel = new CallNumberViewModel();
             string sql = @"select a.AppointmentID,a.PatientID,p.[Name],s.ScheduleID,a.[Status],a.CreatedAt,a.Remark
@@ -1028,9 +1032,10 @@ where  AppointmentID =@AppointmentID";
             return View(viewModel);
 
         }
-        [HttpGet("Visit/GetPatientById/{patientId}")]
-        public IActionResult GetPatientById(int patientId)//查看某个患者所有信息
+        [HttpGet("Visit/GetPatientById/{appointmentID}")]
+        public async Task<IActionResult>  GetPatientById(int appointmentID)//控制器--查看某个患者所有信息
         {
+            int patientId = -1;
             var patient = new List<Patient>
 {
     new Patient
@@ -1058,6 +1063,15 @@ where  AppointmentID =@AppointmentID";
         GuardianPhone = null,
         Remark = null
     } };
+
+            patientId = await GetPatientIdByAppointmentId(appointmentID);
+           var isExist = await CheckPatientInfoIsExist(patientId);
+            if (!isExist)
+            {
+                TempData["ErrorMessage"] = $"找不到该患者信息，患者id:{patientId}";
+                var p = new List<Patient>();
+                return View(p);
+            }
             string sql = @$"SELECT  [PatientID]
       ,[UserId]
       ,[Name]
@@ -1160,8 +1174,8 @@ where  AppointmentID =@AppointmentID";
         }
 
 
-        [HttpGet("Visit/GetPatientMedicalRecordById/{patientid}")]
-        public IActionResult GetPatientMedicalRecordById(int patientid)  //查看某个患者病历记录
+        [HttpGet("Visit/GetPatientMedicalRecordById/{appoinmentId}")]
+        public async Task<IActionResult> GetPatientMedicalRecordById(int appoinmentId)  //控制器--查看某个患者病历记录
         {
             //这个到时重新改改设计一下
             var patientList = new List<Patient>
@@ -1191,10 +1205,10 @@ where  AppointmentID =@AppointmentID";
         GuardianPhone = null,
         Remark = null
     } };
-          
 
+            patientList = new List<Patient>();
             var patient = patientList.FirstOrDefault();
-        
+
 
             #region 某个患者记录
             var medicalRecord = new List<MedicalRecord>
@@ -1212,18 +1226,26 @@ where  AppointmentID =@AppointmentID";
     }
 };
             #endregion
+            int patientid = -1;
+            patientid = await GetPatientIdByAppointmentId(appoinmentId);
+          
+            var isExis =await CheckPatientInfoIsExist(patientid);
+            if (!isExis)
+            {
+                TempData["ErrorMessage"] = $"找不到该患者信息，患者id:{patientid}";
+            }
             GetPatientsInfo(out patientList);//获取所有患者信息
             GetPatientByIdInfo(patientid, out patientList);//获取某个患者信息
-            patient =patientList.FirstOrDefault();
+            patient = patientList.FirstOrDefault();
             GetMedicalRecordByPatientId(patientid, out medicalRecord);//获取某个患者病历记录
 
-              // 创建一个包含患者姓名和医疗记录的视图模型
-              var viewModel = new Tuple<List<MedicalRecord>, Patient>(medicalRecord, patient);
+            // 创建一个包含患者姓名和医疗记录的视图模型
+            var viewModel = new Tuple<List<MedicalRecord>, Patient>(medicalRecord, patient);
             return View(viewModel);
-           
+
         }
-        
-        public virtual void GetMedicalRecordByPatientId(int patientId, out List<MedicalRecord> medicalRecordList)
+
+        public virtual void GetMedicalRecordByPatientId(int patientId, out List<MedicalRecord> medicalRecordList)//--方法，某种患者病历记录
         {
             medicalRecordList = new List<MedicalRecord>();
             string sql = @"
@@ -1268,42 +1290,116 @@ where  AppointmentID =@AppointmentID";
                     }
                 }
             }
-        }//某种患者病历记录
-        //问诊、录入病历CreateMedicalRecord
-        public IActionResult CreateMedicalRecord(int id)
+        }
+        public virtual async Task<bool> CheckPatientInfoIsExist(int patientId)//方法，检查某个患者信息存不存在，会影响病历记录显示等
         {
-            int appointmentId = id;
-            if(id == 0)
-            {
-                TempData["ErrorMessage"] =("挂号ID无效，不能为0！");
+            if (patientId <= 0) {
+                throw new ArgumentException("患者ID无效，不能为负数。", nameof(patientId));
             }
+            string sql = @"select  COUNT(1) from Patients where PatientID =@PatientID";
+            try
+            {
+                using (var conn = new SqlConnection(_connectionString))
+                using (var cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PatientID", patientId);
+                    await conn.OpenAsync();
+                    int count = (int)await cmd.ExecuteScalarAsync();
+                    return count > 0;
+                }
 
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（可以使用 ILogger）
+                // _logger.LogError(ex, "查询病历是否存在时发生错误，AppointmentID: {AppointmentID}", appointmentID);
+                throw ex;
+            }
+        }
+        
+
+        public async Task<IActionResult> CreateMedicalRecord(int id)//控制器--问诊、录入病历CreateMedicalRecord
+        {
+
+            int appointmentId = id;
             var medicalRecord = new MedicalRecord
             {
                 AppointmentID = appointmentId
             };
-          
+            if (id == 0)
+            {
+                TempData["ErrorMessage"] = ("挂号ID无效，不能为0！");
+            }
+            int patientId = await GetPatientIdByAppointmentId(appointmentId);
+            var isExits = await CheckPatientInfoIsExist(patientId);
+            if (!isExits)
+            {
+                TempData["ErrorMessage"] = "没有找到该患者个人信息！";
+                return View(medicalRecord);
+            }
+            var isExist = await CheckedMedicalRecordIfExistAsync(appointmentId);
+            if (isExist)
+            {
+                TempData["ErrorMessage"] = $"该挂号id{appointmentId}：病历已存在，不能插入！";
+                return RedirectToAction("CreateMedicalRecord", new { appointmentId });
+            }
+
+
+
             return View(medicalRecord);
         }
         [HttpPost]
-        public async Task<IActionResult> CreateMedicalRecord(int appointmentId, MedicalRecord createMedicalRecord)
+        public async Task<IActionResult> CreateMedicalRecord(int appointmentId, MedicalRecord createMedicalRecord)//控制器-录入病历
         {
-            createMedicalRecord = new MedicalRecord();
+
             try
             {
+                var isExist = await CheckedMedicalRecordIfExistAsync(appointmentId);
+                if (isExist)
+                {
+                    TempData["ErrorMessage"] = $"该挂号id{appointmentId}：病历已存在，不能插入！";
+                    return RedirectToAction("CreateMedicalRecord", new { appointmentId });
+                }
                 await InsertMedicalRecordAsync(createMedicalRecord);
                 TempData["SuccessMessage"] = "录入病历成功！";
-                return RedirectToAction("CallNumberIndex", new { appointmentId });
+                return RedirectToAction("GetPatientMedicalRecordById", new { id=appointmentId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"录入病历失败：{ex.Message}";
-                return View();
+                return RedirectToAction("GetPatientMedicalRecordById", new { id=appointmentId });
             }
         }
-        #region 插入MedicalRecords方法  
-        public virtual async Task InsertMedicalRecordAsync(MedicalRecord medicalRecord)
+        #region 查询MedicalRecord存不存在
+        public virtual async Task<bool> CheckedMedicalRecordIfExistAsync(int id)//方法
         {
+            int appointmentID = id;
+            string sql = "SELECT COUNT(1) FROM MedicalRecords WHERE AppointmentID = @AppointmentID";
+
+            try
+            {
+                using (var conn = new SqlConnection(_connectionString))
+                using (var cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
+                    await conn.OpenAsync();
+                    int count = (int)await cmd.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（可以使用 ILogger）
+                // _logger.LogError(ex, "查询病历是否存在时发生错误，AppointmentID: {AppointmentID}", appointmentID);
+                throw ex; // 重新抛出，保留原始堆栈
+            }
+        }
+
+        #endregion
+        #region 插入MedicalRecords方法  
+        public virtual async Task InsertMedicalRecordAsync(MedicalRecord medicalRecord)//方法
+        {
+
             string InsertSql = @"INSERT INTO dbo.MedicalRecords (AppointmentID, PatientStatement, Diagnosis, Treatment, [Status], CreatedAt, UpdatedAt)  
                                VALUES   
                                (@AppointmentID, @PatientStatement, @Diagnosis, @Treatment, @Status, @CreatedAt, @UpdatedAt)";
@@ -1336,24 +1432,274 @@ where  AppointmentID =@AppointmentID";
         }
         #endregion
 
-        //开检查单
-        public IActionResult CreateCheckOrder()
+        #region 查询患者id用AppointId
+        public virtual async Task<int> GetPatientIdByAppointmentId(int appointmentID)//方法
         {
-            //// 准备检查项目下拉列表（显示 Name + Description，值使用 CheckItemID）
-            //var checkItems = _context.CheckItems
-            //    .Where(ci => ci.IsActive)
-            //    .Select(ci => new
-            //    {
-            //        CheckItemID = ci.CheckItemID,
-            //        DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
-            //    })
-            //    .ToList();
+            int patientId = 0;
+            string sql = @"select PatientID from Appointments where AppointmentID =@AppointmentID";
+            try
+            {
+                using (var conn = new SqlConnection(_connectionString))
+                using (var cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AppointmentID", appointmentID);
+                    await conn.OpenAsync();
+                    object result = await cmd.ExecuteScalarAsync();
 
-            //ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText");
+                    if (result != null && result != DBNull.Value)
+                    {
+                        patientId = Convert.ToInt32(result);
+                        return patientId; // 成功找到记录
+                    }
+                    else
+                    {
+                        throw new Exception($"未找到{appointmentID}的患者");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "获取患者ID失败，预约ID: {AppointmentID}", appointmentID);
+                // 可以选择重新抛出或返回错误码
+                throw; // 向上层抛出异常，由调用方处理
+            }
 
-            //// 预约下拉列表保持不变（可根据需要调整）
-            //ViewBag.AppointmentID = new SelectList(_context.Appointments, "AppointmentID", "AppointmentID");
-            // 准备检查项目下拉列表（显示 Name + Description，值使用 CheckItemID）
+        }
+        #endregion
+        [HttpGet]
+        public async Task<IActionResult> EditPatientMedicalRecordById0(int id)//不用的控制器 -修改患者病历记录 id 为 AppointmentID
+        {
+            int appointmentId = id;
+
+            var patientList = new List<Patient>();
+            int patientid = await GetPatientIdByAppointmentId(appointmentId);
+
+            #region 某个患者记录
+            var medicalRecord = new List<MedicalRecord>();
+            #endregion
+            GetPatientsInfo(out patientList);//获取所有患者信息
+            GetPatientByIdInfo(patientid, out patientList);//获取某个患者信息
+            var patient = patientList.FirstOrDefault();
+            GetMedicalRecordByPatientId(patientid, out medicalRecord);//获取某个患者病历记录
+
+            // 创建一个包含患者姓名和医疗记录的视图模型
+            var viewModel = new Tuple<List<MedicalRecord>, Patient>(medicalRecord, patient);
+
+            return View(viewModel);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EditPatientMedicalRecordById(int id)  //控制器-修改患者病历记录 id 为 AppointmentID
+        {
+            
+            // 1. 根据 AppointmentID 获取病历记录
+            var medicalRecord = await GetMedicalRecordByAppointmentIdAsync(id);
+
+            if (medicalRecord == null)
+            {
+                // 如果没有病历记录，可以跳转到创建页面
+                TempData["ErrorMessage"] = "该预约暂无病历记录，请先创建。";
+                return RedirectToAction("CreateMedicalRecord", new { id = id });
+            }
+
+            // 2. 获取患者信息（用于显示姓名）
+            int patientId = await GetPatientIdByAppointmentId(id);
+            var patient = await GetPatientByIdAsync(patientId);
+            ViewBag.PatientName = patient?.Name ?? "未知患者";
+
+            // 3. 返回编辑视图
+            return View(medicalRecord);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPatientMedicalRecordById(MedicalRecord model)//控制器-修改患者病历记录提交
+        {
+            if (!ModelState.IsValid)
+            {
+                int appointmentId = model.AppointmentID;
+                // 模型验证失败，重新加载患者信息并返回视图
+                int patientId = await GetPatientIdByAppointmentId(appointmentId);
+                var isExits = await  CheckPatientInfoIsExist(patientId);
+                if (!isExits)
+                {
+                    TempData["ErrorMessage"] = "没有找到该患者个人信息！";
+                    return View(model);
+                }
+                var patient = await GetPatientByIdAsync(patientId);
+                ViewBag.PatientName = patient?.Name ?? "未知患者";
+                return View(model);
+            }
+
+            string updateSql = @"
+        UPDATE MedicalRecords 
+        SET 
+            PatientStatement = @PatientStatement,
+            Diagnosis = @Diagnosis,
+            Treatment = @Treatment,
+            [Status] = @Status,
+            UpdatedAt = @UpdatedAt
+        WHERE AppointmentID = @AppointmentID";
+
+            using (var conn = new SqlConnection(_connectionString))
+            using (var cmd = new SqlCommand(updateSql, conn))
+            {
+                cmd.Parameters.AddWithValue("@PatientStatement", model.PatientStatement ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Diagnosis", model.Diagnosis ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Treatment", model.Treatment ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Status", model.Status ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@AppointmentID", model.AppointmentID);
+
+                try
+                {
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                    if (rowsAffected == 0)
+                    {
+                        // 未找到对应记录
+                        TempData["ErrorMessage"] = "未找到该病历记录，可能已被删除。";
+                        return RedirectToAction("GetPatientMedicalRecordById", new { id = model.AppointmentID });
+                    }
+
+                    TempData["SuccessMessage"] = "病历记录更新成功！";
+                    return RedirectToAction("GetPatientMedicalRecordById", new { id = model.AppointmentID });
+                }
+                catch (SqlException ex)
+                {
+                    // 记录日志（建议注入 ILogger）
+                    TempData["ErrorMessage"] = "数据库操作失败，请稍后重试。";
+                    // 开发时可记录详细错误：_logger.LogError(ex, "更新病历记录失败");
+                    // 重新加载患者信息并返回视图
+                    int patientId = await GetPatientIdByAppointmentId(model.AppointmentID);
+                    var patient = await GetPatientByIdAsync(patientId);
+                    ViewBag.PatientName = patient?.Name ?? "未知患者";
+                    return View(model);
+                }
+            }
+        }
+        #region 根据患者ID获取患者信息
+        public virtual async Task<Patient> GetPatientByIdAsync(int patientId)//方法-根据患者ID获取患者信息
+        {
+            var patient = new Patient();
+            string sql = @"
+                       select  
+                       p.[PatientID]      ,[UserId]      ,[Name]      ,[Birthday]      ,[Gender]      ,[IDCard]
+                     ,[Phone]      ,[InsuranceNo]      ,p.[CreatedAt]      ,[UpdatedAt]      ,[IsMarried]
+                     ,[Nation]      ,[WorkUnit]      ,[Occupation]      ,[Address]      ,[PastMedicalHistory]
+                     ,[DrugAllergyHistory]      ,[GuardianName]      ,[GuardianRelationship]      ,[GuardianAddress]
+                     ,[GuardianPhone]      ,p.[Remark]
+	                 from Patients p
+                       inner join  Appointments a on p.PatientID =a.PatientID
+                       where p.PatientID =@PatientID";
+            try
+            {
+
+  
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                await conn.OpenAsync();
+
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                            // 创建并填充 Patient 对象
+                             patient = new Patient
+                            {
+                                PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? 0 : reader.GetInt32(reader.GetOrdinal("UserId")),
+                                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? string.Empty : reader.GetString(reader.GetOrdinal("Name")),
+                                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                                Gender = reader.IsDBNull(reader.GetOrdinal("Gender")) ? string.Empty : reader.GetString(reader.GetOrdinal("Gender")),
+                                IDCard = reader.IsDBNull(reader.GetOrdinal("IDCard")) ? string.Empty : reader.GetString(reader.GetOrdinal("IDCard")),
+                                Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? string.Empty : reader.GetString(reader.GetOrdinal("Phone")),
+                                InsuranceNo = reader.IsDBNull(reader.GetOrdinal("InsuranceNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("InsuranceNo")),
+                                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                                IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
+                                Nation = reader.IsDBNull(reader.GetOrdinal("Nation")) ? string.Empty : reader.GetString(reader.GetOrdinal("Nation")),
+                                WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit")) ? string.Empty : reader.GetString(reader.GetOrdinal("WorkUnit")),
+                                Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation")) ? string.Empty : reader.GetString(reader.GetOrdinal("Occupation")),
+                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? string.Empty : reader.GetString(reader.GetOrdinal("Address")),
+                                PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory")) ? string.Empty : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
+                                DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory")) ? string.Empty : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
+                                GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuardianName")),
+                                GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
+                                GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuardianAddress")),
+                                GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuardianPhone")),
+                                Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? string.Empty : reader.GetString(reader.GetOrdinal("Remark"))
+                            };
+                            return patient;
+                    }
+                    else
+                    {
+                        throw new Exception($"未找到id为{patientId}的患者");
+                   
+                    }
+                }
+            }
+            }
+            catch (Exception ex )
+            {
+
+                throw ex;
+            }
+
+        }
+        #endregion
+
+        #region//根据AppointmentID获取病历记录
+        private async Task<MedicalRecord> GetMedicalRecordByAppointmentIdAsync(int id)//方法-根据AppointmentID获取病历记录
+        {
+            int appointmentId = id;
+            var  medicalRecord = new MedicalRecord();
+           string sql = @"
+            select RecordID,AppointmentID,PatientStatement,Diagnosis,Treatment,[Status],	CreatedAt	,UpdatedAt
+            from MedicalRecords where AppointmentID =@AppointmentID";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                await conn.OpenAsync();
+
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                         medicalRecord = new MedicalRecord
+                        {
+                            RecordID = reader.GetInt32(reader.GetOrdinal("RecordID")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            PatientStatement = reader.GetString(reader.GetOrdinal("PatientStatement")),
+                            Diagnosis = reader.GetString(reader.GetOrdinal("Diagnosis")),
+                            Treatment = reader.GetString(reader.GetOrdinal("Treatment")),
+                            Status = reader.GetString(reader.GetOrdinal("Status")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                        };
+                        return medicalRecord;
+                    }
+                    else
+                    {
+                        return null;//没有找到记录
+                        //throw new Exception($"没有找到{appointmentId}的：病历历史记录");
+                    }
+                }
+            }
+
+
+
+        }
+        #endregion
+
+
+        public IActionResult CreateCheckOrder(int id)//控制器//开检查单
+        {
+            int appointmentId = id;
             //这个也要好好设计
             _checkItems = new List<CheckItem>();
             GetCheckItemInfo(out _checkItems);
@@ -1378,30 +1724,39 @@ where  AppointmentID =@AppointmentID";
             return View();
         }
 
+        #region 备份
+        public IActionResult CreateCheckOrderbak()//备份控制器//开检查单
+        {
+            //这个也要好好设计
+            _checkItems = new List<CheckItem>();
+            GetCheckItemInfo(out _checkItems);
+            var checkItems = _checkItems
+                .Where(ci => ci.IsActive)
+                .Select(ci => new
+                {
+                    CheckItemID = ci.CheckItemID,
+                    DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
+                })
+                .ToList();
+
+            ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText");
+
+            // 预约下拉列表：使用 AppointmentID 作为值和显示文本（可自定义显示格式）
+            _appointmentIds = new List<int>();
+            GetAppointmentIds(out _appointmentIds);
+
+            var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"挂号#{id}" }).ToList();
+            ViewBag.AppointmentID = new SelectList(appointments, "AppointmentID", "DisplayText");
+
+            return View();
+        }
+        #endregion
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CheckOrder checkOrder)
+        public async Task<IActionResult> Create(CheckOrder checkOrder)//控制器-创建检查单提交
         {
-            //if (ModelState.IsValid)
-            //{
-            //    checkOrder.CreatedAt = DateTime.Now;
-            //    checkOrder.Status = "已开单";
-            //    _context.Add(checkOrder);
-            //    await _context.SaveChangesAsync();
-            //    return RedirectToAction(nameof(Index));
-            //}
-
-            //// 如果验证失败，需要重新填充下拉列表（同样使用组合文本）
-            //var checkItems = _context.CheckItems
-            //    .Where(ci => ci.IsActive)
-            //    .Select(ci => new
-            //    {
-            //        CheckItemID = ci.CheckItemID,
-            //        DisplayText = ci.Name + (string.IsNullOrEmpty(ci.Description) ? "" : " - " + ci.Description)
-            //    })
-            //    .ToList();
-            //ViewBag.CheckItemID = new SelectList(checkItems, "CheckItemID", "DisplayText", checkOrder.CheckItemID);
-            //ViewBag.AppointmentID = new SelectList(_context.Appointments, "AppointmentID", "AppointmentID", checkOrder.AppointmentID);
+          
             if (ModelState.IsValid)
             {
                 // 模拟保存操作（实际应存入数据库）
@@ -1436,7 +1791,7 @@ where  AppointmentID =@AppointmentID";
         }
 
         // GET: CheckOrders/Index
-        public IActionResult CheckOrdersIndex()
+        public IActionResult CheckOrdersIndex()//控制器-患者检查单列表展示
         {
             // 模拟检查单数据（基于您提供的示例）
             var checkOrders = new List<CheckOrder>

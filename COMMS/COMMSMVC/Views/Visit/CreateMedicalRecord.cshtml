@@ -179,8 +179,13 @@
         <div class="form-group" style="margin-top: 2rem;">
             <button type="submit" class="btn-submit">创建记录</button>
             <a asp-action="CreateCheckOrder" class="btn-back">开检查单</a>
-            <a asp-action="GetPatientMedicalRecordById" class="btn-back">← 返回列表</a>
+           
         </div>
+        <div> <a asp-action="GetPatientMedicalRecordById" class="btn-back">← 返回列表</a></div>
+        <div>
+            <a asp-action="EditPatientMedicalRecordById" asp-route-id="@Model.AppointmentID" class="btn-back"> 修改病历记录</a>
+        </div>
+       
     </form>
 </div>
 
