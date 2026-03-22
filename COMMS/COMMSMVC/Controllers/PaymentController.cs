@@ -50,5 +50,58 @@ namespace COMMSMVC.Controllers
             }
             return paymentIndexList;
         }
+
+
+        // GET: /Payments/Detail/5
+        public async Task<IActionResult> Detail(int id)//控制器
+        {
+            // 调用数据访问方法获取单个支付记录
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null)
+            {
+                return NotFound(); // 未找到则返回 404
+            }
+            return View(payment);
+        }
+
+        public virtual async Task<PaymentsIndex> GetPaymentByIdAsync(int paymentId)//方法，查看某个付款记录
+        {
+            string sql = @"
+        SELECT pay.PaymentID, pay.AppointmentID,
+               p.PatientID, p.Name AS PatientName,
+               pay.Amount, pay.Method, pay.Status, pay.PaidAt
+        FROM Payments pay
+        INNER JOIN Appointments a ON pay.AppointmentID = a.AppointmentID
+        INNER JOIN Patients p ON a.PatientID = p.PatientID
+        WHERE pay.PaymentID = @PaymentID";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@PaymentID", paymentId);
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new PaymentsIndex
+                        {
+                            PaymentID = reader.GetInt32(reader.GetOrdinal("PaymentID")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                            PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                            Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                            Method = reader.IsDBNull(reader.GetOrdinal("Method")) ? null : reader.GetString(reader.GetOrdinal("Method")),
+                            Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                            PaidAt = reader.GetDateTime(reader.GetOrdinal("PaidAt"))
+                        };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
+        }
     }
 }

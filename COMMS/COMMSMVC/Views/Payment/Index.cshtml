@@ -124,7 +124,7 @@
                     </td>
                     <td>@item.PaidAt.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="action-links">
-                        <a asp-action="Details" asp-route-id="@item.PaymentID">详情</a>
+                        <a asp-action="Detail" asp-route-id="@item.PaymentID">详情</a>
                         <a asp-action="Edit" asp-route-id="@item.PaymentID">编辑</a>
                         <a asp-action="Delete" asp-route-id="@item.PaymentID" onclick="return confirm('确认删除？')">删除</a>
                     </td>
