@@ -79,7 +79,17 @@
             text-decoration: underline;
         }
 </style>
-
+<div class="btn-group" style="margin-bottom: 20px;">
+    <a asp-action="ExportToExcel" asp-route-id="@Model.PaymentID" class="btn btn-success">
+        <i class="bi bi-file-excel"></i> 导出 Excel
+    </a>
+    <a asp-action="ExportToPdf" asp-route-id="@Model.PaymentID" class="btn btn-danger">
+        <i class="bi bi-file-pdf"></i> 导出 PDF
+    </a>
+    <a asp-action="ExportToImage" asp-route-id="@Model.PaymentID" class="btn btn-info">
+        <i class="bi bi-file-image"></i> 导出图片
+    </a>
+</div>
 <div class="detail-container">
     <h2 class="detail-title">支付详情</h2>
 

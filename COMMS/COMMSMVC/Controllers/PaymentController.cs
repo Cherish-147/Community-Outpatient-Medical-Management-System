@@ -2,6 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Data.SqlClient;
+using OfficeOpenXml;// EPPlus
+using PuppeteerSharp;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
 namespace COMMSMVC.Controllers
 {
@@ -296,5 +300,160 @@ namespace COMMSMVC.Controllers
             }
             return items;
         }
+
+
+        #region 打印
+        /// <summary>
+        /// 导出支付详情到 Excel
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(int id)
+        {
+
+            // 获取支付详情数据
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null) return NotFound();
+
+            // 创建 Excel 文件
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("支付详情");
+                // 设置列宽
+                worksheet.Cells[1, 1].Value = "支付ID";
+                worksheet.Cells[1, 2].Value = "预约ID";
+                worksheet.Cells[1, 3].Value = "患者姓名";
+                worksheet.Cells[1, 4].Value = "金额";
+                worksheet.Cells[1, 5].Value = "支付方式";
+                worksheet.Cells[1, 6].Value = "状态";
+                worksheet.Cells[1, 7].Value = "支付时间";
+
+                worksheet.Cells[2, 1].Value = payment.PaymentID;
+                worksheet.Cells[2, 2].Value = payment.AppointmentID;
+                worksheet.Cells[2, 3].Value = payment.PatientName;
+                worksheet.Cells[2, 4].Value = payment.Amount;
+                worksheet.Cells[2, 5].Value = payment.Method;
+                worksheet.Cells[2, 6].Value = payment.Status;
+                worksheet.Cells[2, 7].Value = payment.PaidAt.ToString("yyyy-MM-dd HH:mm");
+
+                // 自动调整列宽
+                worksheet.Cells[1, 1, 2, 7].AutoFitColumns();
+
+                var stream = new MemoryStream(package.GetAsByteArray());
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"支付详情_{id}.xlsx");
+            }
+        }
+
+        /// <summary>
+        /// 导出支付详情到 PDF
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf(int id)
+        {
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null) return NotFound();
+
+            using (var stream = new MemoryStream())
+            {
+                // 创建 PDF 文档
+                Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
+                PdfWriter.GetInstance(doc, stream);
+                doc.Open();
+
+                // 添加标题
+                var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
+                Paragraph title = new Paragraph("支付详情", titleFont);
+                title.Alignment = Element.ALIGN_CENTER;
+                doc.Add(title);
+                doc.Add(new Paragraph(" ")); // 空行
+
+                // 创建表格（7列）
+                PdfPTable table = new PdfPTable(2);
+                table.WidthPercentage = 100;
+
+                // 添加行
+                AddPdfRow(table, "支付ID", payment.PaymentID.ToString());
+                AddPdfRow(table, "预约ID", payment.AppointmentID.ToString());
+                AddPdfRow(table, "患者姓名", payment.PatientName);
+                AddPdfRow(table, "金额", payment.Amount.ToString("C"));
+                AddPdfRow(table, "支付方式", payment.Method ?? "-");
+                AddPdfRow(table, "状态", payment.Status ?? "-");
+                AddPdfRow(table, "支付时间", payment.PaidAt.ToString("yyyy-MM-dd HH:mm"));
+
+                doc.Add(table);
+                doc.Close();
+
+                return File(stream.ToArray(), "application/pdf", $"支付详情_{id}.pdf");
+            }
+        }
+
+        private void AddPdfRow(PdfPTable table, string label, string value)
+        {
+            var labelCell = new PdfPCell(new Phrase(label, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12)))
+            {
+                BackgroundColor = new BaseColor(240, 240, 240),
+                Padding = 8
+            };
+            var valueCell = new PdfPCell(new Phrase(value, FontFactory.GetFont(FontFactory.HELVETICA, 12)))
+            {
+                Padding = 8
+            };
+            table.AddCell(labelCell);
+            table.AddCell(valueCell);
+        }
+
+        /// <summary>
+        /// 导出支付详情为图片（使用 PuppeteerSharp 将当前详情页转换为图片）
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExportToImage(int id)
+        {
+            // 1. 获取支付详情数据（用于构建完整页面）
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null) return NotFound();
+
+            // 2. 构建要渲染的 HTML（可重用 Detail 视图的部分，但这里简单构建）
+            string htmlContent = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <title>支付详情</title>
+            <style>
+                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }}
+                .container {{ max-width: 800px; margin: auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px; }}
+                h2 {{ text-align: center; color: #0d6efd; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+                td {{ padding: 8px; border-bottom: 1px solid #dee2e6; }}
+                .label {{ font-weight: bold; background-color: #f8f9fa; width: 30%; }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <h2>支付详情</h2>
+                <table>
+                    <tr><td class='label'>支付ID</td><td>{payment.PaymentID}</td></tr>
+                    <tr><td class='label'>预约ID</td><td>{payment.AppointmentID}</td></tr>
+                    <tr><td class='label'>患者姓名</td><td>{payment.PatientName}</td></tr>
+                    <tr><td class='label'>金额</td><td>{payment.Amount:C}</td></tr>
+                    <tr><td class='label'>支付方式</td><td>{payment.Method ?? "-"}</td></tr>
+                    <tr><td class='label'>状态</td><td>{payment.Status ?? "-"}</td></tr>
+                    <tr><td class='label'>支付时间</td><td>{payment.PaidAt:yyyy-MM-dd HH:mm}</td></tr>
+                </table>
+            </div>
+        </body>
+        </html>";
+
+            // 3. 使用 PuppeteerSharp 渲染图片
+            await new BrowserFetcher().DownloadAsync(); // 首次运行会下载 Chromium（约100MB），建议提前下载或部署时包含
+            using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true }))
+            using (var page = await browser.NewPageAsync())
+            {
+                await page.SetContentAsync(htmlContent);
+                var screenshot = await page.ScreenshotDataAsync(); // 默认 PNG 格式
+                return File(screenshot, "image/png", $"支付详情_{id}.png");
+            }
+        }
     }
+        #endregion
 }
+

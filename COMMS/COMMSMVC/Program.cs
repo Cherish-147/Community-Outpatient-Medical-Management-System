@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using OfficeOpenXml;
 
 namespace COMMSMVC
 {
@@ -7,6 +8,9 @@ namespace COMMSMVC
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            ExcelPackage.License.SetNonCommercialPersonal("COOMSMVC");
+
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
@@ -18,6 +22,9 @@ namespace COMMSMVC
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
+         
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
