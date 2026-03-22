@@ -2140,7 +2140,7 @@ where  AppointmentID =@AppointmentID";
             return checkItemNamesLit;
         }
 
-        public virtual async Task<List<CheckOrdersIndex>> GetCheckOrdersByAppointmentId()//方法，获取某一行检查单列表
+        public virtual async Task<List<CheckOrdersIndex>> GetCheckOrdersByAppointmentIdInfo(int appointmentID)//方法，获取某一行检查单列表
         {
             var checkOrdersIndexList = new List<CheckOrdersIndex>();
             string sql = @"	
@@ -2167,7 +2167,7 @@ where  AppointmentID =@AppointmentID";
                 {
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        //cmd.Parameters.AddWithValue("@AppointmentID");//通过AppointmentID id查询才需要这句
+                        cmd.Parameters.AddWithValue("@AppointmentID",appointmentID);//通过AppointmentID id查询才需要这句
                         await conn.OpenAsync();
                         using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                         {
@@ -2203,5 +2203,207 @@ where  AppointmentID =@AppointmentID";
         }
 
 
-    }
+        public virtual async Task<List<CheckOrdersIndex>> GetCheckOrdersByCheckOrderIdInfo(int checkOrderID)//方法，通过CheckOrderID获取某一行检查单列表
+        {
+            var checkOrdersIndexList = new List<CheckOrdersIndex>();
+            string sql = @"	
+	                        select
+	                    	p.PatientID,
+	                    	p.[Name] as PatientName,
+		                    ci.Name	as CheckItemName,
+	                       co.[CheckOrderID]
+                          ,co.[AppointmentID]
+                          ,co.[CheckItemID]
+                          ,co.[Status]
+                          ,co.[Result]
+                          ,co.[CreatedAt]
+                          ,co.[UpdatedAt]
+	                      from CheckOrders co
+	                      inner join Appointments a on a.AppointmentID =co.AppointmentID
+	                      inner join Patients p on p.PatientID =a.PatientID
+                          inner join CheckItems ci on  ci.CheckItemID =co.CheckItemID
+	                      where co.CheckOrderID =@CheckOrderID 
+";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CheckOrderID", checkOrderID);//通过CheckOrderID id查询才需要这句
+                        await conn.OpenAsync();
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var checkOrdersIndex = new CheckOrdersIndex
+                                {
+                                    PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                    PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                                    CheckItemName = reader.GetString(reader.GetOrdinal("CheckItemName")),
+                                    CheckOrderID = reader.GetInt32(reader.GetOrdinal("CheckOrderID")),
+                                    AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                                    CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                                    Result = reader.IsDBNull(reader.GetOrdinal("Result")) ? null : reader.GetString(reader.GetOrdinal("Result")),
+                                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                    UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                                };
+                                checkOrdersIndexList.Add(checkOrdersIndex);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "获取检查单列表失败");
+                // 根据需要可以选择重新抛出或返回空列表
+                return null;
+            }
+            return checkOrdersIndexList;
+        }
+
+        //用这个
+        public virtual async Task<CheckOrder> GetCheckOrderByIdAsync(int checkOrderId)//方法，只获取CheckOrder通过orderId
+        {
+            string sql = @"
+        SELECT CheckOrderID, AppointmentID, CheckItemID, [Status], Result, CreatedAt, UpdatedAt
+        FROM CheckOrders
+        WHERE CheckOrderID = @CheckOrderID";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@CheckOrderID", checkOrderId);
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new CheckOrder
+                        {
+                            CheckOrderID = reader.GetInt32(reader.GetOrdinal("CheckOrderID")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                            Status = reader.GetString(reader.GetOrdinal("Status")),
+                            Result = reader.IsDBNull(reader.GetOrdinal("Result")) ? null : reader.GetString(reader.GetOrdinal("Result")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                        };
+                    }
+                    else
+                    {
+                        return null; // 未找到记录
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// 控制器获取某一行检查单列表
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> GetCheckOrdersByAppointmentId(int id) //控制器获取某一行检查单列表
+        {
+            int appointmentId = id;
+            var checkOrders = new List<CheckOrdersIndex>();
+            checkOrders = await GetCheckOrdersByAppointmentIdInfo(appointmentId);
+            return View(checkOrders);
+   
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditCheckOrdersByCheckOrderId(int id) //控制器修改某一行检查单列表
+        {
+            //int appointmentId = id;
+            int checkOrderId = id;
+            // 根据 CheckOrderID 获取检查单实体
+            var checkOrder = await GetCheckOrderByIdAsync(id);
+            if (checkOrder == null)
+            {
+                return NotFound();
+            }
+
+            // 获取检查项目列表用于下拉框
+            var checkItems = await GetCheckItemNameList();
+            ViewBag.CheckItems = new SelectList(checkItems, "CheckItemID", "CheckItemName", checkOrder.CheckItemID);
+
+            return View(checkOrder);
+         
+        }
+
+        /// <summary>
+        ///控制器，提交修改Order订单
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCheckOrdersByCheckOrderId(CheckOrder model)// 控制器，提交修改Order订单
+        {
+            if (!ModelState.IsValid)
+            {
+                // 验证失败，重新加载下拉列表并返回视图
+                var checkItems = await GetCheckItemNameList();
+                ViewBag.CheckItems = new SelectList(checkItems, "CheckItemID", "CheckItemName", model.CheckItemID);
+                return View(model);
+            }
+
+            // 调用更新方法
+            bool success = await UpdateCheckOrderAsync(model);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "检查单更新成功！";
+                return RedirectToAction(nameof(CheckOrdersIndex)); // 重定向到列表页
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "更新失败，请稍后重试。";
+                // 重新加载下拉列表
+                var checkItems = await GetCheckItemNameList();
+                ViewBag.CheckItems = new SelectList(checkItems, "CheckItemID", "CheckItemName", model.CheckItemID);
+                return View(model);
+            }
+        }
+        public virtual async Task<List<CheckOrdersIndex>> GetEditCheckOrdersByAppointmentId(int appointmentId)//方法，获取某一行检查单列表用于编辑
+        {
+            var checkOrders = new List<CheckOrdersIndex>();
+            checkOrders = await GetCheckOrdersByAppointmentIdInfo(appointmentId);
+            return checkOrders;
+        }
+        public virtual async Task<bool> UpdateCheckOrderAsync(CheckOrder checkOrder)//方法，更新检查单信息
+        {
+            string updateSql = @"UPDATE dbo.CheckOrders
+                                SET CheckItemID = @CheckItemID,
+                                    [Status] = @Status,
+                                    Result = @Result,
+                                    UpdatedAt = @UpdatedAt
+                                WHERE CheckOrderID = @CheckOrderID";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(updateSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CheckItemID", checkOrder.CheckItemID);
+                    cmd.Parameters.AddWithValue("@Status", checkOrder.Status ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Result", checkOrder.Result ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@CheckOrderID", checkOrder.CheckOrderID);
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    return rowsAffected > 0; // 返回是否成功更新
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "更新检查单失败");
+                // 根据需要可以选择重新抛出或返回 false
+                return false;
+            }
+        }
+        }
 }

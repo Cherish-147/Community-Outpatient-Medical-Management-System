@@ -293,6 +293,12 @@
                                         <i class="bi bi-trash me-2"></i> 删除就诊
                                     </a>
                                 </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Visit" ? "active fw-bold" : "")"
+                                           asp-controller="Visit" asp-action="CheckOrdersIndex">
+                                        <i class="bi bi-eye me-2"></i> 查看检查单
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </li>
