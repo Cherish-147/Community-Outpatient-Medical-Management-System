@@ -1,12 +1,11 @@
 ﻿@model List<COMMSMVC.Models.CheckOrdersIndex>
 @{
     ViewData["Title"] = "检查单列表";
-    var checkItemsDict = ViewBag.CheckItems as Dictionary<int, string>;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <style>
-    /* 可以沿用之前的样式，或添加表格专用样式 */
+    /* 自定义状态徽章字体颜色 */
     .table-container {
         max-width: 1200px;
         margin: 2rem auto;
@@ -97,12 +96,33 @@
         .action-links a:hover {
             text-decoration: underline;
         }
-</style>
+    .badge-warning {
+        color: #212529 !important; /* 深灰色 */
+        background-color: #fff3cd; /* 可保留原背景或自定义 */
+    }
+
+    .badge-info {
+        color: #212529 !important;
+        background-color: #d1ecf1;
+    }
+
+    .badge-success {
+        color: #212529 !important;
+        background-color: #d4edda;
+    }
+
+    .badge-secondary {
+        color: #212529 !important;
+        background-color: #e2e3e5;
+    }</style>
 
 <div class="table-container">
     <h2 class="page-title">检查单列表</h2>
-
-    <a asp-action="Create" class="btn-create">+ 新建检查单</a>
+@*     @foreach (var item in Model)
+    {
+           
+        <a asp-action="CreateCheckOrders" class="btn-create" asp-route-id="@item.AppointmentID">+ 新建检查单</a>            
+     } *@
 
     <table class="table">
         <thead>
@@ -124,17 +144,8 @@
                 <tr>
                     <td>@item.CheckOrderID</td>
                     <td>@item.AppointmentID</td>
-                    <td>@item.Name</td>  <!-- 直接使用模型中的姓名 -->
-                    <td>
-                        @if (checkItemsDict != null && checkItemsDict.ContainsKey(item.CheckItemID))
-                        {
-                            @checkItemsDict[item.CheckItemID]
-                        }
-                        else
-                        {
-                            <span>未知项目</span>
-                        }
-                    </td>
+                    <td>@item.PatientName</td>  <!-- 直接使用模型中的患者姓名 -->
+                    <td>@item.CheckItemName</td> <!-- 直接使用模型中的检查项目名称 -->
                     <td>
                         @{
                             string badgeClass = "badge-secondary";
@@ -149,6 +160,7 @@
                     <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                     <td class="action-links">
+                            @* <a asp-action="CreateCheckOrders" asp-route-id="@item.AppointmentID">创建</a> *@
                         <a asp-action="Details" asp-route-id="@item.CheckOrderID">详情</a>
                         <a asp-action="Edit" asp-route-id="@item.CheckOrderID">编辑</a>
                         <a asp-action="Delete" asp-route-id="@item.CheckOrderID" onclick="return confirm('确认删除？')">删除</a>
