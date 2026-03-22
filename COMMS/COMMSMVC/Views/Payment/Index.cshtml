@@ -1,0 +1,135 @@
+﻿@model IEnumerable<COMMSMVC.Models.PaymentsIndex>
+@{
+    ViewData["Title"] = "支付记录列表";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .table-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .page-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .table th {
+        background-color: #f8f9fa;
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .badge-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .badge-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .badge-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    .badge-secondary {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+    .btn-create {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .btn-create:hover {
+        background-color: #0b5ed7;
+    }
+    .action-links a {
+        margin-right: 0.5rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    .action-links a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="table-container">
+    <h2 class="page-title">支付记录列表</h2>
+
+    <a asp-action="Create" class="btn-create">+ 新建支付</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>支付ID</th>
+                <th>预约ID</th>
+                <th>患者ID</th>
+                <th>患者姓名</th>
+                <th>金额</th>
+                <th>支付方式</th>
+                <th>状态</th>
+                <th>支付时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.PaymentID</td>
+                    <td>@item.AppointmentID</td>
+                    <td>@item.PatientID</td>
+                    <td>@item.PatientName</td>
+                    <td>@item.Amount.ToString("C")</td> <!-- 货币格式显示金额 -->
+                    <td>@(string.IsNullOrEmpty(item.Method) ? "-" : item.Method)</td>
+                    <td>
+                        @{
+                            string badgeClass = "badge-secondary";
+                            if (item.Status == "已支付") badgeClass = "badge-success";
+                            else if (item.Status == "待支付") badgeClass = "badge-warning";
+                            else if (item.Status == "退款中") badgeClass = "badge-info";
+                            else if (item.Status == "已退款") badgeClass = "badge-secondary";
+                        }
+                        <span class="badge @badgeClass">@(string.IsNullOrEmpty(item.Status) ? "-" : item.Status)</span>
+                    </td>
+                    <td>@item.PaidAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="action-links">
+                        <a asp-action="Details" asp-route-id="@item.PaymentID">详情</a>
+                        <a asp-action="Edit" asp-route-id="@item.PaymentID">编辑</a>
+                        <a asp-action="Delete" asp-route-id="@item.PaymentID" onclick="return confirm('确认删除？')">删除</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

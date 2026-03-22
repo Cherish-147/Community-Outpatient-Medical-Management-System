@@ -303,7 +303,7 @@
                         </div>
                     </li>
                     <!-- 收费管理 -->
-                    <li class="nav-item">
+ @*                    <li class="nav-item">
                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "active" : "")"
                            href="#" role="button" data-bs-toggle="collapse" data-bs-target="#paymentMenu" aria-expanded="false">
                             <i class="bi bi-cash-stack me-2"></i> 收费管理
@@ -315,8 +315,36 @@
                                 <li><a class="dropdown-item" asp-controller="Payment" asp-action="Refund">退费处理</a></li>
                             </ul>
                         </div>
+                    </li> *@
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "active" : "")"
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#paymentMenu" aria-expanded="false">
+                            <i class="bi bi-cash-stack me-2"></i> 收费管理
+                        </a>
+                        <!-- 核心修改：对齐Medication菜单的结构和高亮逻辑 -->
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "show" : "")" id="paymentMenu">
+                            <ul class="list-unstyled ps-3">
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                           asp-controller="Payment" asp-action="Index">
+                                        <i class="bi bi-list-ul me-2"></i> 收费记录
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active fw-bold" : "")"
+                                           asp-controller="Payment" asp-action="Create">
+                                        <i class="bi bi-plus-circle me-2"></i> 新增收费
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Refund" ? "active fw-bold" : "")"
+                                           asp-controller="Payment" asp-action="Refund">
+                                        <i class="bi bi-arrow-return-left me-2"></i> 退费处理
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
-
                     <!-- 系统管理 -->
                     <li class="nav-item">
                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "active" : "")"
