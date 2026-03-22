@@ -1,0 +1,158 @@
+﻿@model COMMSMVC.Models.MedicalRecord
+
+@{
+    ViewData["Title"] = "编辑病历记录";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .form-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+        .btn-submit:hover {
+            background-color: #0b5ed7;
+        }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+        .btn-back:hover {
+            text-decoration: underline;
+        }
+</style>
+
+<div class="form-container">
+    <h2 class="form-title">编辑病历记录</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <form asp-action="EditPatientMedicalRecordById" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="RecordID" />
+        <input type="hidden" asp-for="AppointmentID" />
+
+        <div class="form-group">
+            <label class="form-label">患者姓名</label>
+            <input type="text" class="form-control" value="@ViewBag.PatientName" readonly />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">预约ID</label>
+            <input type="text" class="form-control" value="@Model.AppointmentID" readonly />
+        </div>
+
+        <div class="form-group">
+            <label asp-for="PatientStatement" class="form-label">患者主诉</label>
+            <textarea asp-for="PatientStatement" class="form-control" rows="3" placeholder="请输入患者主诉"></textarea>
+            <span asp-validation-for="PatientStatement" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Diagnosis" class="form-label">诊断结果</label>
+            <textarea asp-for="Diagnosis" class="form-control" rows="3" placeholder="请输入诊断结果"></textarea>
+            <span asp-validation-for="Diagnosis" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Treatment" class="form-label">治疗方案</label>
+            <textarea asp-for="Treatment" class="form-control" rows="3" placeholder="请输入治疗方案"></textarea>
+            <span asp-validation-for="Treatment" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Status" class="form-label">状态</label>
+            <select asp-for="Status" class="form-select">
+                <option value="">请选择状态</option>
+                <option value="待诊">待诊</option>
+                <option value="出诊">出诊</option>
+                <option value="复诊">复诊</option>
+                <option value="完成">完成</option>
+                <option value="取消">取消</option>
+            </select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">创建时间</label>
+            <input type="text" class="form-control" value="@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")" readonly />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">最后更新</label>
+            <input type="text" class="form-control" value="@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")" readonly />
+        </div>
+
+        <button type="submit" class="btn-submit">保存修改</button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1rem;">
+        <a asp-action="GetPatientMedicalRecordById" asp-route-id="@Model.AppointmentID" class="btn-back">← 返回病历记录列表</a>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

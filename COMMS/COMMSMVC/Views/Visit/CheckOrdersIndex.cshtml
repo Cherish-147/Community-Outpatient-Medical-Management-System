@@ -1,8 +1,7 @@
-﻿@model IEnumerable<CheckOrder>
+﻿@model List<COMMSMVC.Models.CheckOrdersIndex>
 @{
     ViewData["Title"] = "检查单列表";
     var checkItemsDict = ViewBag.CheckItems as Dictionary<int, string>;
-    var patientDict = ViewBag.PatientNames as Dictionary<int, string>;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -110,7 +109,7 @@
             <tr>
                 <th>ID</th>
                 <th>预约ID</th>
-                <th>患者姓名</th>   <!-- 新增列 -->
+                <th>患者姓名</th>
                 <th>检查项目</th>
                 <th>状态</th>
                 <th>结果</th>
@@ -125,16 +124,7 @@
                 <tr>
                     <td>@item.CheckOrderID</td>
                     <td>@item.AppointmentID</td>
-                    <td>
-                        @if (patientDict != null && patientDict.ContainsKey(item.AppointmentID))
-                        {
-                            @patientDict[item.AppointmentID]
-                        }
-                        else
-                        {
-                            <span>未知患者</span>
-                        }
-                    </td>
+                    <td>@item.Name</td>  <!-- 直接使用模型中的姓名 -->
                     <td>
                         @if (checkItemsDict != null && checkItemsDict.ContainsKey(item.CheckItemID))
                         {

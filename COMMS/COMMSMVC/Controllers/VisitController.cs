@@ -1790,10 +1790,11 @@ where  AppointmentID =@AppointmentID";
             
         }
 
+        #region CheckOrdersIndexbak
         // GET: CheckOrders/Index
-        public IActionResult CheckOrdersIndex()//控制器-患者检查单列表展示
+        public IActionResult CheckOrdersIndexbak()//控制器-患者检查单列表展示
         {
-            // 模拟检查单数据（基于您提供的示例）
+            #region// 模拟检查单数据（基于您提供的示例）
             var checkOrders = new List<CheckOrder>
     {
         new CheckOrder { CheckOrderID = 1, AppointmentID = 1, CheckItemID = 1, Status = "已开单", Result = "血脂偏高", CreatedAt = new DateTime(2024, 1, 15), UpdatedAt = null },
@@ -1804,6 +1805,7 @@ where  AppointmentID =@AppointmentID";
         new CheckOrder { CheckOrderID = 6, AppointmentID = 6, CheckItemID = 6, Status = "已开单", Result = "X光片显示正常", CreatedAt = new DateTime(2024, 1, 17), UpdatedAt = null },
         new CheckOrder { CheckOrderID = 7, AppointmentID = 7, CheckItemID = 6, Status = "已检查", Result = "X光片显示正常", CreatedAt = new DateTime(2024, 1, 18), UpdatedAt = new DateTime(2024, 1, 18) }
     };
+
             var patients = new List<Patient>
     {
         new Patient { PatientID = 1, Name = "王五" },
@@ -1815,15 +1817,190 @@ where  AppointmentID =@AppointmentID";
         new Patient { PatientID = 7, Name = "王十二" },
         new Patient { PatientID = 13, Name = "2" }  // 第13条记录，姓名为"2"（可能是测试数据）
     };
-
+            #endregion
+            checkOrders = new List<CheckOrder>();
             // 构建 AppointmentID 到患者姓名的字典（假设 AppointmentID == PatientID）
             var patientDict = patients.ToDictionary(p => p.PatientID, p => p.Name);
             // 检查项目数据（复用之前的 _checkItems）
             // 为了在视图中方便获取项目名称，可以将检查项目列表存入 ViewBag 或使用 Join
             ViewBag.CheckItems = _checkItems.ToDictionary(ci => ci.CheckItemID, ci => ci.Name);
-
+            
             return View(checkOrders);
         }
         #endregion
+        #endregion
+        #region 备份方法
+        public virtual async Task<List<CheckOrder>> GetCheckOrderList()//备份方法，获取检查单列表
+        {
+            var checkOrdersList = new List<CheckOrder>();
+            string sql = @"	
+                           select[CheckOrderID]
+                         ,[AppointmentID]
+                         ,[CheckItemID]
+                         ,[Status]
+                         ,[Result]
+                         ,[CreatedAt]
+                         ,[UpdatedAt]
+	                     from CheckOrders";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+
+                        await conn.OpenAsync();
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var order = new CheckOrder
+                                {
+                                    CheckOrderID = reader.GetInt32(reader.GetOrdinal("CheckOrderID")),
+                                    AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                                    CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                                    Result = reader.IsDBNull(reader.GetOrdinal("Result")) ? null : reader.GetString(reader.GetOrdinal("Result")),
+                                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                    UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                                };
+                                checkOrdersList.Add(order);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "获取检查单列表失败");
+                // 根据需要可以选择重新抛出或返回空列表
+                return null;
+            }
+            return checkOrdersList;
+        }
+        #endregion
+
+
+
+
+        #region 分界线
+
+        #endregion
+
+
+        /// <summary>
+        /// 控制器-患者检查单列表展示
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> CheckOrdersIndex()//控制器-患者检查单列表展示
+        {
+            var checkOrders =new List<CheckOrdersIndex>();
+            checkOrders =await GetCheckOrdersIndexList();
+            return View(checkOrders);
+        }
+        public virtual async Task<List<CheckOrdersIndex>> GetCheckOrdersIndexList()//方法，获取检查单列表展示用
+        {
+            var checkOrdersIndexList = new List<CheckOrdersIndex>();
+            string sql = @"	
+	                        select
+	                    	p.PatientID,
+	                    	p.[Name],
+	                       co.[CheckOrderID]
+                          ,co.[AppointmentID]
+                          ,co.[CheckItemID]
+                          ,co.[Status]
+                          ,co.[Result]
+                          ,co.[CreatedAt]
+                          ,co.[UpdatedAt]
+	                      from CheckOrders co
+	                      inner join Appointments a on a.AppointmentID =co.AppointmentID
+	                      inner join Patients p on p.PatientID =a.PatientID
+	                      --where co.AppointmentID =@AppointmentID --通过AppointmentID id查询才需要这句
+";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        //cmd.Parameters.AddWithValue("@AppointmentID");//通过AppointmentID id查询才需要这句
+                        await conn.OpenAsync();
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var checkOrdersIndex = new CheckOrdersIndex
+                                {
+                                    PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                    CheckOrderID = reader.GetInt32(reader.GetOrdinal("CheckOrderID")),
+                                    AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                                    CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                                    Result = reader.IsDBNull(reader.GetOrdinal("Result")) ? null : reader.GetString(reader.GetOrdinal("Result")),
+                                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                    UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                                };
+                                checkOrdersIndexList.Add(checkOrdersIndex);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "获取检查单列表失败");
+                // 根据需要可以选择重新抛出或返回空列表
+                return null;
+            }
+            return checkOrdersIndexList;
+        }
+
+        public virtual async Task<List<ChekItemNameList>> GetChekItemNameByAppointmentId(int id) //方法，还没用显示checkItem名
+        {
+            var chekItemNameList = new List<ChekItemNameList>();
+            string sql = @"
+      select c.AppointmentID,c.CheckOrderID,ci.CheckItemID,ci.Name from CheckItems ci
+	  inner join CheckOrders c 	  on ci.CheckItemID =c.CheckItemID
+	  inner join Appointments a   on a.AppointmentID =c.AppointmentID";
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        //cmd.Parameters.AddWithValue("@AppointmentID");//通过AppointmentID id查询才需要这句
+                        await conn.OpenAsync();
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var chekItemName = new ChekItemNameList
+                                {
+                                    AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                                    
+                                    CheckOrderID = reader.GetInt32(reader.GetOrdinal("CheckOrderID")),
+                                    CheckItemID = reader.GetInt32(reader.GetOrdinal("CheckItemID")),
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                };
+                                chekItemNameList.Add(chekItemName);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "获取检查单列表失败");
+                // 根据需要可以选择重新抛出或返回空列表
+                return null;
+            }
+            return chekItemNameList;
+        }
     }
 }
