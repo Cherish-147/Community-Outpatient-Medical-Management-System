@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using COMMSMVC.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -7,7 +8,190 @@ namespace COMMSMVC.Controllers
     public class PatientController : Controller
     {
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False";
+        #region 患者管理
+        public async Task<IActionResult> GetAllPatientsIndex()//控制器，患者列表首页(管理端)
+        {
+           var patientsList = await GetAllPatientsInfoAsync();
+            return View(patientsList);
+        }
+        public virtual async Task<List<Patient>> GetAllPatientsInfoAsync()//方法--获取所有患者信息(管理端)
+        {
+            var patientsList = new List<Patient>();
+            string sql = @"SELECT [PatientID]
+                                         ,[UserId]
+                                         ,[Name]
+                                         ,[Birthday]
+                                         ,[Gender]
+                                         ,[IDCard]
+                                         ,[Phone]
+                                         ,[InsuranceNo]
+                                         ,[CreatedAt]
+                                         ,[UpdatedAt]
+                                         ,[IsMarried]
+                                         ,[Nation]
+                                         ,[WorkUnit]
+                                         ,[Occupation]
+                                         ,[Address]
+                                         ,[PastMedicalHistory]
+                                         ,[DrugAllergyHistory]
+                                         ,[GuardianName]
+                                         ,[GuardianRelationship]
+                                         ,[GuardianAddress]
+                                         ,[GuardianPhone]
+                                         ,[Remark]
+                                     FROM [Patients]";
+            try
+            {
 
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                   
+                    if (conn.State != ConnectionState.Open)
+                    {
+                        await conn.OpenAsync();
+                    }
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var patient = new Patient
+                            {
+                                PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? 0 : reader.GetInt32(reader.GetOrdinal("UserId")),
+                                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
+                                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                                Gender = reader.IsDBNull(reader.GetOrdinal("Gender")) ? null : reader.GetString(reader.GetOrdinal("Gender")),
+                                IDCard = reader.IsDBNull(reader.GetOrdinal("IDCard")) ? null : reader.GetString(reader.GetOrdinal("IDCard")),
+                                Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? null : reader.GetString(reader.GetOrdinal("Phone")),
+                                InsuranceNo = reader.IsDBNull(reader.GetOrdinal("InsuranceNo")) ? null : reader.GetString(reader.GetOrdinal("InsuranceNo")),
+                                CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                                IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
+                                Nation = reader.IsDBNull(reader.GetOrdinal("Nation")) ? null : reader.GetString(reader.GetOrdinal("Nation")),
+                                WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit")) ? null : reader.GetString(reader.GetOrdinal("WorkUnit")),
+                                Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation")) ? null : reader.GetString(reader.GetOrdinal("Occupation")),
+                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                                PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory")) ? null : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
+                                DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory")) ? null : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
+                                GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName")) ? null : reader.GetString(reader.GetOrdinal("GuardianName")),
+                                GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship")) ? null : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
+                                GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress")) ? null : reader.GetString(reader.GetOrdinal("GuardianAddress")),
+                                GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone")) ? null : reader.GetString(reader.GetOrdinal("GuardianPhone")),
+                                Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? null : reader.GetString(reader.GetOrdinal("Remark"))
+                            };
+                            patientsList.Add(patient);
+                        }
+                    } 
+
+                    }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("获取所有患者失败：" + ex.Message);
+                return null;
+            }
+            return patientsList;
+            
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPatientsIndex(string name, int? patientId)
+        {
+            List<Patient> patientsList;
+
+            // 如果有搜索条件，调用搜索方法；否则获取全部
+            if (!string.IsNullOrWhiteSpace(name) || patientId.HasValue)
+            {
+                patientsList = await SearchPatientsAsync(name, patientId);
+                // 将搜索条件传递到视图，用于回显
+                ViewBag.Name = name;          // 回显搜索词
+                ViewBag.PatientId = patientId; // 回显ID
+            }
+            else
+            {
+                patientsList = await GetAllPatientsInfoAsync();
+            }
+
+            return View(patientsList);
+        }
+
+        public async Task<List<Patient>> SearchPatientsAsync(string name, int? patientId)
+        {
+            var patientsList = new List<Patient>();
+
+            // 构建动态SQL，使用参数化查询防止注入
+            string sql = @"SELECT [PatientID], [UserId], [Name], [Birthday], [Gender], [IDCard], 
+                          [Phone], [InsuranceNo], [CreatedAt], [UpdatedAt], [IsMarried], 
+                          [Nation], [WorkUnit], [Occupation], [Address], [PastMedicalHistory], 
+                          [DrugAllergyHistory], [GuardianName], [GuardianRelationship], 
+                          [GuardianAddress], [GuardianPhone], [Remark]
+                   FROM [Patients]
+                   WHERE 1=1";
+
+            var parameters = new List<SqlParameter>();
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                sql += " AND [Name] LIKE @Name";
+                parameters.Add(new SqlParameter("@Name", $"%{name}%"));
+            }
+
+            if (patientId.HasValue)
+            {
+                sql += " AND [PatientID] = @PatientId";
+                parameters.Add(new SqlParameter("@PatientId", patientId.Value));
+            }
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddRange(parameters.ToArray());
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        // 使用之前提供的安全读取方法（已包含空值处理）
+                        patientsList.Add(MapToPatient(reader));
+                    }
+                }
+            }
+
+            return patientsList;
+        }
+
+        // 将读取逻辑提取为辅助方法（可选）
+        private Patient MapToPatient(SqlDataReader reader)
+        {
+            return new Patient
+            {
+                PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PatientID")),
+                UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? 0 : reader.GetInt32(reader.GetOrdinal("UserId")),
+                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
+                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                Gender = reader.IsDBNull(reader.GetOrdinal("Gender")) ? null : reader.GetString(reader.GetOrdinal("Gender")),
+                IDCard = reader.IsDBNull(reader.GetOrdinal("IDCard")) ? null : reader.GetString(reader.GetOrdinal("IDCard")),
+                Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? null : reader.GetString(reader.GetOrdinal("Phone")),
+                InsuranceNo = reader.IsDBNull(reader.GetOrdinal("InsuranceNo")) ? null : reader.GetString(reader.GetOrdinal("InsuranceNo")),
+                CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
+                Nation = reader.IsDBNull(reader.GetOrdinal("Nation")) ? null : reader.GetString(reader.GetOrdinal("Nation")),
+                WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit")) ? null : reader.GetString(reader.GetOrdinal("WorkUnit")),
+                Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation")) ? null : reader.GetString(reader.GetOrdinal("Occupation")),
+                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory")) ? null : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
+                DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory")) ? null : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
+                GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName")) ? null : reader.GetString(reader.GetOrdinal("GuardianName")),
+                GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship")) ? null : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
+                GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress")) ? null : reader.GetString(reader.GetOrdinal("GuardianAddress")),
+                GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone")) ? null : reader.GetString(reader.GetOrdinal("GuardianPhone")),
+                Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? null : reader.GetString(reader.GetOrdinal("Remark"))
+            };
+        }
+        #endregion
         // 患者首页
         // 1. 挂号首页（选择排班+患者信息）- 优化剩余号源计算
         public IActionResult Index()
