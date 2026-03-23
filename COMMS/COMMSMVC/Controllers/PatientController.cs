@@ -191,6 +191,92 @@ namespace COMMSMVC.Controllers
                 Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? null : reader.GetString(reader.GetOrdinal("Remark"))
             };
         }
+
+
+        // GET: /Patient/Create
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: /Patient/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePost(Patient model)
+        {
+            // 移除可能的 ModelState 错误（例如 CreatedAt 自动生成，无需验证）
+            ModelState.Remove("CreatedAt");
+            ModelState.Remove("UpdatedAt");
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // 设置创建时间
+            model.CreatedAt = DateTime.Now;
+            model.UpdatedAt = null;  // 新记录没有更新时间
+
+            // 调用插入方法
+            bool success = await InsertPatientAsync(model);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "患者信息添加成功！";
+                return RedirectToAction(nameof(GetAllPatientsIndex)); // 跳转到患者列表
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "添加失败，请稍后重试。";
+                return View(model);
+            }
+        }
+        public async Task<bool> InsertPatientAsync(Patient patient)
+        {
+            string insertSql = @"
+        INSERT INTO Patients 
+        (UserId, Name, Birthday, Gender, IDCard, Phone, InsuranceNo, 
+         CreatedAt, UpdatedAt, IsMarried, Nation, WorkUnit, Occupation, 
+         Address, PastMedicalHistory, DrugAllergyHistory, GuardianName, 
+         GuardianRelationship, GuardianAddress, GuardianPhone, Remark)
+        VALUES 
+        (@UserId, @Name, @Birthday, @Gender, @IDCard, @Phone, @InsuranceNo,
+         @CreatedAt, @UpdatedAt, @IsMarried, @Nation, @WorkUnit, @Occupation,
+         @Address, @PastMedicalHistory, @DrugAllergyHistory, @GuardianName,
+         @GuardianRelationship, @GuardianAddress, @GuardianPhone, @Remark)";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(insertSql, conn))
+            {
+                cmd.Parameters.AddWithValue("@UserId", patient.UserId == 0 ? (object)DBNull.Value : patient.UserId);
+                cmd.Parameters.AddWithValue("@Name", patient.Name ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Birthday", patient.Birthday ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Gender", patient.Gender ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IDCard", patient.IDCard ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Phone", patient.Phone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@InsuranceNo", patient.InsuranceNo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@CreatedAt", patient.CreatedAt);
+                cmd.Parameters.AddWithValue("@UpdatedAt", patient.UpdatedAt ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IsMarried", patient.IsMarried ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Nation", patient.Nation ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@WorkUnit", patient.WorkUnit ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Occupation", patient.Occupation ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Address", patient.Address ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@PastMedicalHistory", patient.PastMedicalHistory ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@DrugAllergyHistory", patient.DrugAllergyHistory ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianName", patient.GuardianName ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianRelationship", patient.GuardianRelationship ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianAddress", patient.GuardianAddress ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianPhone", patient.GuardianPhone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Remark", patient.Remark ?? (object)DBNull.Value);
+
+                await conn.OpenAsync();
+                int rows = await cmd.ExecuteNonQueryAsync();
+                return rows > 0;
+            }
+        }
+
+
         #endregion
         // 患者首页
         // 1. 挂号首页（选择排班+患者信息）- 优化剩余号源计算
