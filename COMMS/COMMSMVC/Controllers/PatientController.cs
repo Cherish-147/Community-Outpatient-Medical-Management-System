@@ -1,5 +1,6 @@
 ﻿using COMMSMVC.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -195,8 +196,15 @@ namespace COMMSMVC.Controllers
 
         // GET: /Patient/Create
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            var users = await GetAllUsersAsync();
+            var userItems = users.Select(u => new SelectListItem
+            {
+                Value = u.UserId.ToString(),
+                Text = $"{u.UserId} - {u.UserName}"
+            }).ToList();
+            ViewBag.Users = userItems;
             return View();
         }
 
@@ -276,7 +284,28 @@ namespace COMMSMVC.Controllers
             }
         }
 
-
+        public async Task<List<BindUsers>> GetAllUsersAsync()//方法--获取所有用户信息（用于患者注册时选择关联用户）
+        {
+            var users = new List<BindUsers>();
+            string sql = "SELECT UserId, UserName FROM Users";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        users.Add(new BindUsers
+                        {
+                            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                            UserName = reader.GetString(reader.GetOrdinal("UserName"))
+                        });
+                    }
+                }
+            }
+            return users;
+        }
         #endregion
         // 患者首页
         // 1. 挂号首页（选择排班+患者信息）- 优化剩余号源计算

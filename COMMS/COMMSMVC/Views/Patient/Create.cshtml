@@ -3,6 +3,7 @@
     ViewData["Title"] = "新增患者";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 <style>
     .form-container {
@@ -109,6 +110,19 @@
         @Html.AntiForgeryToken()
 
         <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label asp-for="UserId" class="form-label">关联用户</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select asp-for="UserId" class="form-select" style="flex: 1;" asp-items="ViewBag.Users">
+                            <option value="">-- 请选择用户 --</option>
+                        </select>
+                        <a asp-action="Create" asp-controller="User" asp-route-returnUrl="@Context.Request.Path" class="btn btn-secondary" style="white-space: nowrap;">+ 新建用户</a>
+                    </div>
+                    <small class="form-text text-muted">若无合适用户，请点击“新建用户”创建</small>
+                    <span asp-validation-for="UserId" class="text-danger"></span>
+                </div>
+                 
             <div class="col">
                 <div class="form-group">
                     <label asp-for="Name" class="form-label">姓名 <span class="required-mark">*</span></label>
