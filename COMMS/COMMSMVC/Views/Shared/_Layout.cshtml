@@ -405,8 +405,8 @@
                         <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "show" : "")" id="systemMenu">
                             <ul class="list-unstyled ps-3">
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "UserManagement" ? "active fw-bold" : "")"
-                                           asp-controller="System" asp-action="UserManagement">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                       asp-controller="User" asp-action="Index">
                                         <i class="bi bi-people me-2"></i> 用户管理
                                     </a>
                                 </li>

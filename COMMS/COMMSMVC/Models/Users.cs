@@ -17,5 +17,7 @@ namespace COMMSMVC.Models
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Gender { get; set; }
+        public bool IsActive { get; set; }
+        public string TwoPassword { get; set; }
     }
 }

@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\StatisticalData\**" />
+    <Content Remove="Views\StatisticalData\**" />
+    <EmbeddedResource Remove="Views\StatisticalData\**" />
+    <None Remove="Views\StatisticalData\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EPPlus" Version="8.4.2" />
     <PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.7.12" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
