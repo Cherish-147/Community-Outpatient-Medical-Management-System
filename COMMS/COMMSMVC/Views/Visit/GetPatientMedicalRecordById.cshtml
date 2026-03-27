@@ -74,6 +74,7 @@
                         <a asp-action="EditPatientMedicalRecordById" asp-route-id="@item.AppointmentID" class="btn btn-sm btn-outline-warning" title="编辑">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <a asp-action="GetPatientAppointmentById" asp-route-id="@item.AppointmentID" class="btn-back">← 返回列表</a>
                         <form asp-action="Delete" method="post" style="display:inline;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.RecordID" />
@@ -84,6 +85,7 @@
                         </form>
                     </td>
                 </tr>
+
             }
         </tbody>
     </table>

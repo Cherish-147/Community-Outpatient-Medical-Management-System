@@ -1177,6 +1177,7 @@ where  AppointmentID =@AppointmentID";
                 }
             }
             GetPatientByIdInfo(patientId, out patient);
+            ViewBag.AppointmentID = appointmentID;
             return View(patient);
         }
 
@@ -1552,8 +1553,8 @@ where  AppointmentID =@AppointmentID";
             using (var cmd = new SqlCommand(updateSql, conn))
             {
                 cmd.Parameters.AddWithValue("@PatientStatement", model.PatientStatement ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Diagnosis", model.Diagnosis ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Treatment", model.Treatment ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Diagnosis", model.Diagnosis ?? "");
+                cmd.Parameters.AddWithValue("@Treatment", model.Treatment ?? "");
                 cmd.Parameters.AddWithValue("@Status", model.Status ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
                 cmd.Parameters.AddWithValue("@AppointmentID", model.AppointmentID);
@@ -1683,7 +1684,7 @@ where  AppointmentID =@AppointmentID";
                             AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
                             PatientStatement = reader.GetString(reader.GetOrdinal("PatientStatement")),
                             Diagnosis = reader.GetString(reader.GetOrdinal("Diagnosis")),
-                            Treatment = reader.GetString(reader.GetOrdinal("Treatment")),
+                            Treatment = reader.IsDBNull(reader.GetOrdinal("Treatment"))?null:reader.GetString(reader.GetOrdinal("Treatment")),
                             Status = reader.GetString(reader.GetOrdinal("Status")),
                             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                             UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
