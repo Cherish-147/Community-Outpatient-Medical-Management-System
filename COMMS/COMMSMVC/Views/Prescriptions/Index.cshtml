@@ -1,0 +1,121 @@
+﻿@model List<COMMSMVC.Models.PrescriptionsIndexModel>
+@{
+    ViewData["Title"] = "处方管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@* 加搜索框，根据处方查询，患者姓名模糊查询，编辑是编辑detail，删除是删除再处方表，先明细表，然后更新药品库存，为后续发药做准备 ，模板要加上处方管理*@
+<style>
+    .table-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+        .table th {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .btn-create {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+        .btn-create:hover {
+            background-color: #0b5ed7;
+        }
+
+    .action-links a {
+        margin-right: 0.5rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+</style>
+
+<div class="table-container">
+    <h2 class="page-title">处方管理</h2>
+
+    <a asp-action="Create" class="btn-create">+ 新建处方</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>处方ID</th>
+                <th>预约ID</th>
+                <th>患者姓名</th>
+                <th>明细ID</th>
+                <th>药品名称</th>
+                <th>剂量</th>
+                <th>数量</th>
+                <th>频次</th>
+                <th>时长(天)</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.PrescriptionID</td>
+                    <td>@item.AppointmentID</td>
+                    <td>@item.PatientName</td>
+                    <td>@item.DetailID</td>
+                    <td>@item.MedicationName</td>
+                    <td>@item.DoseValue @item.DoseUnit</td>
+                    <td>@item.Quantity</td>
+                    <td>@(string.IsNullOrEmpty(item.Frequency) ? "-" : item.Frequency)</td>
+                    <td>@(item.Duration > 0 ? item.Duration.ToString() : "-")</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="action-links">
+                        <!-- 隐藏字段：存储 MedicationID，不显示在表格中 -->
+                        <input type="hidden" name="medicationId" value="@item.MedicationID" />
+                        <a asp-action="Details" asp-route-id="@item.PrescriptionID">详情</a>
+                        <a asp-action="Edit" asp-route-id="@item.PrescriptionID">编辑</a>
+                        <a asp-action="Delete" asp-route-id="@item.PrescriptionID" onclick="return confirm('确定要删除该处方吗？')">删除</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
