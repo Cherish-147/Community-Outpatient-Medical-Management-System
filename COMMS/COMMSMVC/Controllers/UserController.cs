@@ -1,14 +1,10 @@
 ﻿using COMMSMVC.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.SqlClient;
-using System.Net.Http;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,19 +16,7 @@ namespace COMMSMVC.Controllers
     {
         private readonly string baseUrl = "https://localhost:7190/api";
         private HttpClient httpclient = new();
-        //private tokens = HttpContext.Session.Getstring("JWTToken");//不能全局
-
-        //public async Task<IActionResult> Index()//狭取所有用户信息
-        //{
-        //    var token = HttpContext.Session.GetString("JWTToken");
-        //    using HttpClient client = new();
-        //    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",token);
-        //    var usersRes = await client.GetAsync(baseUrl + "/Users/GetAllUser");
-        //    var userResBody = await usersRes.Content.ReadAsStringAsync();
-        //    var users = JsonConvert.DeserializeObject<List<Users>>(userResBody);
-        //    return View(users);//return View(db.Temp1113 Users.ToList());
-        //}
-        // 数据库连接字符串（替换为你的实际连接字符串）
+    
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
 
         public async Task<IActionResult> Index()//狭取所有用户信息
@@ -63,7 +47,7 @@ namespace COMMSMVC.Controllers
                 var token = HttpContext.Session.GetString("JWTToken");
                 using HttpClient client = new();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var usersRes = await client.GetAsync(baseUrl + "/Users/GetUsersrsList");
+                var usersRes = await client.GetAsync(baseUrl + "/UserManage/GetUsersrsList");
                 var userResBody = await usersRes.Content.ReadAsStringAsync();
                 var users = JsonConvert.DeserializeObject<List<Users>>(userResBody);
 
@@ -98,7 +82,7 @@ namespace COMMSMVC.Controllers
             using (httpclient)
             {
                 httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var usersRes = await httpclient.GetAsync(baseUrl + " /Users /GetUserById / " + id);
+                var usersRes = await httpclient.GetAsync(baseUrl + " /UserManage/GetUserById / " + id);
                 var userResBody = await usersRes.Content.ReadAsStringAsync();
                 var user = JsonConvert.DeserializeObject<Users>(userResBody);
                 if (user == null)
@@ -139,7 +123,7 @@ namespace COMMSMVC.Controllers
                     httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                     var json = System.Text.Json.JsonSerializer.Serialize(users);
                     var content = new StringContent(json, Encoding.UTF8, "text/json");
-                    var response = await httpclient.PostAsync(baseUrl + "/Users/CreateUser", content);
+                    var response = await httpclient.PostAsync(baseUrl + "/UserManage/CreateUser", content);
                     if (response.IsSuccessStatusCode)
                     {
                         return RedirectToAction("Index");
@@ -150,19 +134,6 @@ namespace COMMSMVC.Controllers
             return View(users);
         }
 
-        //[HttpPost]
-
-        //public async Task<ActionResult> Create([Bind(Include = "UserId,UserName,Password,Role,Email,PhoneNumber,Gender")] Users users)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        db.Users.Add(users);
-        //        await db.SaveChangesAsync();
-        //        return RedirectToAction("Index");
-        //    }
-        //AddDropdownList();//法-:翻这个留视图@Htm1.DropDownlistFor(model=>model.Role),@*法一  new List<SelectListItem> 
-        //    return View(users);
-        //}
 
         [HttpGet]
         public async Task<ActionResult> Edit(int? id)
@@ -178,7 +149,7 @@ namespace COMMSMVC.Controllers
             using (httpclient)
             {
                 httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var usersRes = await httpclient.GetAsync(baseUrl + "/Users/GetUserData/" + id);
+                var usersRes = await httpclient.GetAsync(baseUrl + "/UserManage/GetUserData/" + id);
 
                 var userResBody = await usersRes.Content.ReadAsStringAsync();
                 var users = JsonConvert.DeserializeObject<List<UserModel>>(userResBody);
@@ -224,7 +195,7 @@ namespace COMMSMVC.Controllers
                 var json = JsonConvert.SerializeObject(requestData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 //发送 POST 请求
-                var response = await client.PutAsync(baseUrl + $"/Users/UpdateUser/{model.UserId}", content);
+                var response = await client.PutAsync(baseUrl + $"/UserManage/UpdateUser/{model.UserId}", content);
                 if (response.IsSuccessStatusCode)
                 {
                     var responseBody = await response.Content.ReadAsStringAsync();
