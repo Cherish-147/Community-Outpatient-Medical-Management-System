@@ -1,6 +1,7 @@
 ﻿using COMMSMVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -14,11 +15,15 @@ namespace COMMSMVC.Controllers
 {
     public class UserController : Controller
     {
-        private readonly string baseUrl = "https://localhost:7190/api";
+        private  string baseUrl = "https://localhost:7190/api";
         private HttpClient httpclient = new();
     
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
-
+        public UserController(IOptions<ApiConfig> apiConfig, IConfiguration configuration)
+        {
+            baseUrl = apiConfig.Value.BaseUrl;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         public async Task<IActionResult> Index()//狭取所有用户信息
         {
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||

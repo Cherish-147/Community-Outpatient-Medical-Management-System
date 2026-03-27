@@ -1,27 +1,35 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Data.SqlClient;
-using System.Data;
-using System.Net.Http.Headers;
-using COMMSMVC.Models;
+﻿using COMMSMVC.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Data;
+using System.Data.SqlClient;
+using System.Net.Http.Headers;
 using System.Text;
 namespace COMMSMVC.Controllers
 {
     public class DoctorController : Controller
     {
+        private string baseUrl = "https://localhost:7190/api";
+        // 数据库连接字符串（替换为你的实际连接字符串）
+        private  string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
+
+        public DoctorController(IOptions<ApiConfig> apiConfig, IConfiguration configuration)
+        {
+            baseUrl = apiConfig.Value.BaseUrl;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         //public IActionResult Index()
         //{
         //    return View();
         //}
         //
         #region 医生管理控制器
-        private readonly string baseUrl = "https://localhost:7190/api";
+       
         private HttpClient httpclient = new();
         #endregion
-        // 数据库连接字符串（替换为你的实际连接字符串）
-        private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
-
+    
         // 1. 医生列表（查询）
         public async Task<IActionResult> Index()
             {

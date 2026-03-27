@@ -1,5 +1,6 @@
 ﻿using COMMSMVC.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -10,8 +11,14 @@ namespace COMMSMVC.Controllers
     public class MedicationController : Controller
     {
         #region 药品管理控制器
-        private readonly string baseUrl = "https://localhost:7190/api";
+        private  string baseUrl = "https://localhost:7190/api";
+        private string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
         private HttpClient httpclient = new();
+        public MedicationController( IOptions<ApiConfig> apiConfig,IConfiguration configuration)
+        {
+          baseUrl = apiConfig.Value.BaseUrl;
+          _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         //药品管理首页
         public async Task<IActionResult> Index()
         {
@@ -86,7 +93,7 @@ namespace COMMSMVC.Controllers
             try
             {
                 // 4. 发送 POST 请求
-                var response = await client.PostAsync("https://localhost:7190/api/Medication/CreateMedications", content);
+                var response = await client.PostAsync($"{baseUrl}/Medication/CreateMedications", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -133,7 +140,7 @@ namespace COMMSMVC.Controllers
 
             try
             {
-                var response = await client.GetAsync($"https://localhost:7190/api/Medication/GetMedicationById?medicationId={id}");
+                var response = await client.GetAsync($"{baseUrl}/Medication/GetMedicationById?medicationId={id}");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -209,7 +216,7 @@ namespace COMMSMVC.Controllers
             try
             {
                 // 注意 API 地址：UpdateMedications{medicationId}，可能需要拼接 id
-                var response = await client.PostAsync($"https://localhost:7190/api/Medication/UpdateMedications?medicationId={id}", content);
+                var response = await client.PostAsync($"{baseUrl}/Medication/UpdateMedications?medicationId={id}", content);
                 // 如果 API 使用 POST 或 PUT，请根据实际情况选择 PutAsync 或 PostAsync
 
                 if (response.IsSuccessStatusCode)
@@ -253,7 +260,7 @@ namespace COMMSMVC.Controllers
 
             try
             {
-                var response = await client.GetAsync($"https://localhost:7190/api/Medication/GetMedicationById?medicationId={id}");
+                var response = await client.GetAsync($"{baseUrl}/Medication/GetMedicationById?medicationId={id}");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -299,7 +306,7 @@ namespace COMMSMVC.Controllers
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             try
             {
-                var response = await client.PostAsync($"https://localhost:7190/api/Medication/DeleteMedicationById?medicationId={id}",null);
+                var response = await client.PostAsync($"{baseUrl}/Medication/DeleteMedicationById?medicationId={id}",null);
 
 
                 if (response.IsSuccessStatusCode)

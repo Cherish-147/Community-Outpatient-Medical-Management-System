@@ -1,3 +1,4 @@
+using COMMSMVC.Models;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 
@@ -22,8 +23,10 @@ namespace COMMSMVC
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
-         
 
+            
+            // 读取配置
+            builder.Services.Configure<ApiConfig>(builder.Configuration.GetSection("ApiConfig"));//配置URL到配置文件中
 
             var app = builder.Build();
 

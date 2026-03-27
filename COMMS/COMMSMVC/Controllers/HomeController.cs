@@ -7,17 +7,30 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+
 
 namespace COMMSMVC.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        //private string baseUrl = "https://192.168.5.6/api";
+        private  string baseUrl = "https://localhost:7190/api";
+        private string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
+        public HomeController(ILogger<HomeController> logger, IOptions<ApiConfig> apiConfig, IConfiguration configuration)
         {
             _logger = logger;
+            baseUrl = apiConfig.Value.BaseUrl;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
+         
+
+        
+           
+
+         
+       
 
         public IActionResult Index()
         {
@@ -52,7 +65,10 @@ namespace COMMSMVC.Controllers
         {
             return View();
         }
-        private readonly string baseUrl = "https://localhost:7190/api";
+      
+
+        //IIS 不支持双斜杠 //
+        //IIS Express 支持
         [HttpPost]
         public async Task<IActionResult> Login(COMMSMVC.Models.LoginRequest model)
         {

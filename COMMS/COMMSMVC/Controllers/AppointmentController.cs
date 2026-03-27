@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using COMMSMVC.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -8,7 +10,12 @@ namespace COMMSMVC.Controllers
     {
         // 数据库连接字符串（替换为你的实际连接字符串）
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
-
+        private string baseUrl = "https://localhost:7190/api";
+        public AppointmentController(IOptions<ApiConfig> apiConfig,IConfiguration configuration)
+        {
+            baseUrl = apiConfig.Value.BaseUrl; ;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         // 1. 挂号首页（选择排班+患者信息）
         public IActionResult Index()
         {

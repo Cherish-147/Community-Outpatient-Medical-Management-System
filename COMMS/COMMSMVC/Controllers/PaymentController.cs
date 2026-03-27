@@ -1,18 +1,24 @@
 ﻿using COMMSMVC.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Data.SqlClient;
-using OfficeOpenXml;// EPPlus
-using PuppeteerSharp;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
+using OfficeOpenXml;// EPPlus
+using PuppeteerSharp;
+using System.Data.SqlClient;
 
 namespace COMMSMVC.Controllers
 {
     public class PaymentController : Controller
     {
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
-
+        private readonly string baseUrl ="";
+        public PaymentController(IOptions<ApiConfig> apiConfig, IConfiguration configuration)
+        {
+            baseUrl = apiConfig.Value.BaseUrl;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         //支付控制器
         public async Task<IActionResult> Index()//控制器
         {

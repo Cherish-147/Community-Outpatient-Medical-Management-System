@@ -1,6 +1,7 @@
 ﻿using COMMSMVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
 using System.Data.SqlClient;
 using System.Reflection;
 
@@ -9,6 +10,12 @@ namespace COMMSMVC.Controllers
     public class VisitController : Controller
     {
         private readonly string _connectionString = "Server=.;Database=Community-Outpatient-Medical-Management-System;Integrated Security=true;Encrypt=False;";
+       private string baseUrl = "https://localhost:7190/api";
+        public VisitController(IOptions<ApiConfig> apiConfig,IConfiguration configuration)
+        {
+            baseUrl = apiConfig.Value.BaseUrl;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
         #region// 模拟数据
         private List<CheckItem> _checkItems = new List<CheckItem>
         {
