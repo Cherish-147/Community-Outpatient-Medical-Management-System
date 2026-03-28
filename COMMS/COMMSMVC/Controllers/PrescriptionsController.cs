@@ -39,7 +39,7 @@ namespace COMMSMVC.Controllers
             {
                 // 无条件，获取全部
                 // 休眠 0.2 秒（200 毫秒）
-                await Task.Delay(200);
+                //await Task.Delay(200);
                 prescriptionsList = await GetPrescriptionsIndexInfoAsync();
             }
             return View(prescriptionsList);
@@ -69,7 +69,7 @@ namespace COMMSMVC.Controllers
                 using (SqlConnection conn = new SqlConnection(_connectionString))
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    conn.OpenAsync();
+                    await conn.OpenAsync();
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         while (reader.Read())
