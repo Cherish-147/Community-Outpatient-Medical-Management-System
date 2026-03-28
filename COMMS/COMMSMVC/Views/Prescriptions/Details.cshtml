@@ -1,0 +1,148 @@
+﻿@model COMMSMVC.Models.PrescriptionDetailViewModel
+@{
+    ViewData["Title"] = "处方详情";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* 复用之前样式，可精简 */
+    .detail-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .detail-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .info-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .info-item {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #333;
+        margin-right: 0.5rem;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+        .table th {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+    .action-links a {
+        margin-right: 0.5rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+</style>
+<div style="margin-bottom: 1rem;">
+    <a asp-action="CreateDetail" asp-route-prescriptionId="@Model.PrescriptionID" class="btn-create">
+        <i class="bi bi-plus-circle"></i> 新增药品明细
+    </a>
+</div>
+
+<div class="detail-container">
+    <h2 class="detail-title">处方详情</h2>
+
+    <div class="info-card">
+        <div class="info-item">
+            <span class="info-label">处方ID：</span> @Model.PrescriptionID
+        </div>
+        <div class="info-item">
+            <span class="info-label">预约ID：</span> @Model.AppointmentID
+        </div>
+        <div class="info-item">
+            <span class="info-label">患者姓名：</span> @Model.PatientName
+        </div>
+        <div class="info-item">
+            <span class="info-label">创建时间：</span> @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+        </div>
+    </div>
+
+    @if (Model.Details.Any())
+    {
+        <h4>处方明细</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>药品名称</th>
+                    <th>剂量</th>
+                    <th>数量</th>
+                    <th>频次</th>
+                    <th>疗程(天)</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Details)
+                {
+                    <tr>
+                        <td>@item.MedicationName</td>
+                        <td>@item.DoseValue @item.DoseUnit</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.Frequency</td>
+                        <td>@item.Duration</td>
+                        <td>@item.Remarks</td>
+                        <td class="action-links">
+                            <a asp-action="EditDetail" asp-route-id="@item.DetailID">编辑</a>
+                            <form asp-action="DeleteDetail" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="detailId" value="@item.DetailID" />
+                                <button type="submit" class="btn-link" style="background:none; border:none; color:#0d6efd; padding:0; margin:0 0 0 5px; cursor:pointer; text-decoration:underline;" onclick="return confirm('确定要删除该处方明细吗？');">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">暂无处方明细</p>
+    }
+
+    <div>
+        <a asp-action="Index" class="btn-back">← 返回处方列表</a>
+    </div>
+</div>

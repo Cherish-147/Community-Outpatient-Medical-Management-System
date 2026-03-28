@@ -145,6 +145,20 @@
             background-color: #5a6268;
             color: white;
         }
+
+    .btn-link { /* 为使删除按钮与链接样式一致，可以添加如下 CSS（已在上面的按钮中内联样式，但也可统一）     background: none; */
+        
+        border: none;
+        color: #0d6efd;
+        padding: 0;
+        margin: 0 0 0 5px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+        .btn-link:hover {
+            color: #0b5ed7;
+        }
 </style>
 <div class="table-container">
     <h2 class="page-title">处方管理</h2>
@@ -202,7 +216,11 @@
                         <input type="hidden" name="medicationId" value="@item.MedicationID" />
                             <a asp-action="Details" asp-route-id="@item.DetailID">详情</a>
                             <a asp-action="EditDetail" asp-route-id="@item.DetailID">编辑</a>
-                            <a asp-action="Delete" asp-route-id="@item.DetailID" onclick="return confirm('确定要删除该处方吗？')">删除</a>
+                            <form asp-action="DeletePrescription" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.PrescriptionID" />
+                                <button type="submit" class="btn-link" style="background:none; border:none; color:#0d6efd; padding:0; margin:0 0 0 5px; cursor:pointer; text-decoration:underline;" onclick="return confirm('确定要删除该处方吗？');">删除</button>
+                            </form>
                     </td>
                 </tr>
             }
