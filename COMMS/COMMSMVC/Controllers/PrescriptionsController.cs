@@ -547,7 +547,7 @@ namespace COMMSMVC.Controllers
         LEFT JOIN PrescriptionDetails pd ON pr.PrescriptionID = pd.PrescriptionID
         LEFT JOIN Medications m ON pd.MedicationID = m.MedicationID
         --WHERE pr.PrescriptionID = @PrescriptionID
-        WHERE pr.PrescriptionID = @PrescriptionID
+        WHERE pd.DetailID = @DetailID
         ORDER BY pd.DetailID";
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
