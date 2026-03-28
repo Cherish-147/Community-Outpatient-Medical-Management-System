@@ -525,7 +525,7 @@ namespace COMMSMVC.Controllers
             return View(viewModel);
         }
 
-        private async Task<PrescriptionDetailViewModel> GetPrescriptionDetailViewModelAsync(int prescriptionId)
+        private async Task<PrescriptionDetailViewModel> GetPrescriptionDetailViewModelAsync(int detailID)//(int prescriptionId)
         {
             string sql = @"
         SELECT 
@@ -546,13 +546,15 @@ namespace COMMSMVC.Controllers
         INNER JOIN Patients p ON a.PatientID = p.PatientID
         LEFT JOIN PrescriptionDetails pd ON pr.PrescriptionID = pd.PrescriptionID
         LEFT JOIN Medications m ON pd.MedicationID = m.MedicationID
+        --WHERE pr.PrescriptionID = @PrescriptionID
         WHERE pr.PrescriptionID = @PrescriptionID
         ORDER BY pd.DetailID";
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
-                cmd.Parameters.AddWithValue("@PrescriptionID", prescriptionId);
+                //cmd.Parameters.AddWithValue("@PrescriptionID", prescriptionId);
+                cmd.Parameters.AddWithValue("@DetailID", detailID);
                 await conn.OpenAsync();
                 using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                 {
