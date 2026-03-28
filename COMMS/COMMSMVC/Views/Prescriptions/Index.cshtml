@@ -12,7 +12,6 @@
         background-color: white;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        overflow-x: auto;
     }
 
     .page-title {
@@ -25,7 +24,6 @@
     .table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 1000px;
     }
 
         .table th {
@@ -39,12 +37,34 @@
         .table td {
             padding: 0.75rem;
             border-bottom: 1px solid #dee2e6;
-            vertical-align: middle;
         }
 
         .table tbody tr:hover {
             background-color: #f5f5f5;
         }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .badge-male {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .badge-female {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .badge-unknown {
+        background-color: #6c757d;
+        color: white;
+    }
 
     .btn-create {
         display: inline-block;
@@ -70,12 +90,82 @@
         .action-links a:hover {
             text-decoration: underline;
         }
-</style>
 
+    .search-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: flex-end;
+    }
+
+        .search-bar .form-group {
+            flex: 1;
+        }
+
+            .search-bar .form-group label {
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+
+        .search-bar .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+        }
+
+    /* 补充按钮样式 */
+    .btn-search, .btn-reset {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn-search {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+        .btn-search:hover {
+            background-color: #0b5ed7;
+        }
+
+    .btn-reset {
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+        .btn-reset:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+</style>
 <div class="table-container">
     <h2 class="page-title">处方管理</h2>
-
+    
     <a asp-action="Create" class="btn-create">+ 新建处方</a>
+<div class="table-container">    
+    <!-- 搜索框 -->
+    <form method="get" asp-action="Index" class="search-bar">
+        <div class="search-group">
+            <label for="prescriptionId">处方ID（精准）</label>
+            <input type="number" id="prescriptionId" name="prescriptionId" value="@ViewBag.PrescriptionID" placeholder="请输入处方ID" />
+        </div>
+        <div class="search-group">
+            <label for="patientName">患者姓名（模糊）</label>
+            <input type="text" id="patientName" name="patientName" value="@ViewBag.PatientName" placeholder="请输入患者姓名" />
+        </div>
+        <div>
+            <button type="submit" class="btn-search">搜索</button>
+            <a asp-action="Index" class="btn-reset">重置</a>
+        </div>
+    </form>
 
     <table class="table">
         <thead>
@@ -110,9 +200,9 @@
                     <td class="action-links">
                         <!-- 隐藏字段：存储 MedicationID，不显示在表格中 -->
                         <input type="hidden" name="medicationId" value="@item.MedicationID" />
-                        <a asp-action="Details" asp-route-id="@item.PrescriptionID">详情</a>
-                        <a asp-action="Edit" asp-route-id="@item.PrescriptionID">编辑</a>
-                        <a asp-action="Delete" asp-route-id="@item.PrescriptionID" onclick="return confirm('确定要删除该处方吗？')">删除</a>
+                            <a asp-action="Details" asp-route-id="@item.DetailID">详情</a>
+                            <a asp-action="EditDetail" asp-route-id="@item.DetailID">编辑</a>
+                            <a asp-action="Delete" asp-route-id="@item.DetailID" onclick="return confirm('确定要删除该处方吗？')">删除</a>
                     </td>
                 </tr>
             }

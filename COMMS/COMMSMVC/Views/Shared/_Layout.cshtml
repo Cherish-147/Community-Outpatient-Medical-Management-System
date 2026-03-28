@@ -363,6 +363,37 @@
                         </div>
                     </li>
 
+                    @* 处方管理 *@
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions" ? "active" : "")"
+                               href="#" role="button" data-bs-toggle="collapse"
+                               data-bs-target="#PrescriptionsMenu"
+                               aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions" ? "true" : "false")">
+                            <i class="bi bi-file-earmark-medical me-2"></i> 处方管理
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions" ? "show" : "")" id="PrescriptionsMenu">
+                            <ul class="list-unstyled ps-3">
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                           asp-controller="Prescriptions" asp-action="Index">
+                                        <i class="bi bi-list-ul me-2"></i> 已开处方列表
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active fw-bold" : "")"
+                                           asp-controller="Prescriptions" asp-action="Create">
+                                        <i class="bi bi-plus-circle me-2"></i> 新增处方
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Template" ? "active fw-bold" : "")"
+                                           asp-controller="Prescriptions" asp-action="Template">
+                                        <i class="bi bi-file-text me-2"></i> 处方模板
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                     <!-- 收费管理（保留已优化的样式） -->
                     <li class="nav-item">
                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Payment" ? "active" : "")"
