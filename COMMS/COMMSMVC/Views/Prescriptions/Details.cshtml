@@ -73,11 +73,26 @@
         margin-top: 1rem;
         color: #0d6efd;
         text-decoration: none;
+
+        .btn-create {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
     }
 </style>
 <div style="margin-bottom: 1rem;">
     <a asp-action="CreateDetail" asp-route-prescriptionId="@Model.PrescriptionID" class="btn-create">
         <i class="bi bi-plus-circle"></i> 新增药品明细
+    </a>
+    <a asp-controller="Medication" asp-action="CheckDispenseMedication" asp-route-id="@Model.AppointmentID" class="btn-create">
+        @* asp-route-id 这个看控制器参数，控制器是id后面就id ，如果 asp-route-AppointmentID -->  public async Task<IActionResult> CheckDispenseMedication(int ? AppointmentID)*@
+        <i class="bi bi-plus-circle"></i> 去发药
     </a>
 </div>
 

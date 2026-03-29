@@ -218,7 +218,8 @@ namespace COMMSMVC.Controllers
 
                     // 2. 插入处方明细
                     await InsertPrescriptionDetailAsync(prescriptionId, model);
-
+                    //3.更新药品库存？
+                    //写在药品控制器里
                     transaction.Complete();
 
                     TempData["SuccessMessage"] = $"处方创建成功！处方编号：{prescriptionId}";
