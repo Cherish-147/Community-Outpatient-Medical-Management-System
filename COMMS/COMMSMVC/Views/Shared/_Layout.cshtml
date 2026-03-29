@@ -464,11 +464,37 @@
                     </li>
 
                     <!-- 数据统计 -->
-                    <li class="nav-item">
+@*                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "active" : "")"
                                asp-controller="Statistics" asp-action="Index">
                             <i class="bi bi-bar-chart me-2"></i> 数据统计
                         </a>
+                    </li> *@
+                    <!-- 数据统计 -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "active" : "")"
+                               href="#" role="button" data-bs-toggle="collapse"
+                               data-bs-target="#statisticsMenu"
+                               aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "true" : "false")">
+                            <i class="bi bi-bar-chart me-2"></i> 数据统计
+                        </a>
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" ? "show" : "")" id="statisticsMenu">
+                            <ul class="list-unstyled ps-3">
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
+                                           asp-controller="Statistics" asp-action="Index">
+                                        <i class="bi bi-pie-chart me-2"></i> 综合统计
+                                    </a>
+                                </li>
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" && ViewContext.RouteData.Values["Action"].ToString() == "MedicationStatistics" ? "active fw-bold" : "")"
+                                           asp-controller="Statistics" asp-action="MedicationStatistics">
+                                        <i class="bi bi-capsule me-2"></i> 药品统计
+                                    </a>
+                                </li>
+                                <!-- 可根据需要添加更多子项 -->
+                            </ul>
+                        </div>
                     </li>
                 }
             }
