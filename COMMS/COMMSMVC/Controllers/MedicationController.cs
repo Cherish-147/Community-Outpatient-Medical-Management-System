@@ -595,8 +595,8 @@ BEGIN TRY
         AND pd.Remarks <> '已发药';
 
 --顺便更新
-update Appointments set status='已完成' where AppointmentID=@AppointmentID
-update MedicalRecords set status='已完成' where AppointmentID=@AppointmentID
+update Appointments set status='已完成'  where AppointmentID=@AppointmentID
+update MedicalRecords set status='已完成',UpdatedAt = GetDate() where AppointmentID=@AppointmentID
 --顺便更新
 
     -- ==============================================
