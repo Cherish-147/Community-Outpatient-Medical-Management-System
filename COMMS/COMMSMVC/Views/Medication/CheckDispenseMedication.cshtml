@@ -116,7 +116,7 @@
                         <td>@item.Quantity</td>
                         <td>@item.Stock</td>
                         <td>
-                            <form asp-action="Dispense" method="post" style="display:inline;">
+                            <form asp-action="Dispense" asp-route-id="@item.AppointmentID" method="post" style="display:inline;">
                                 @Html.AntiForgeryToken()
    @*                              <input type="hidden" name="detailId" value="@item.DetailID" />
                                 <input type="hidden" name="medicationId" value="@item.MedicationID" />

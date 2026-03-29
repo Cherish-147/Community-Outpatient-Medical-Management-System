@@ -379,7 +379,7 @@ namespace COMMSMVC.Controllers
                     TempData["SuccessMessage"] = "处方明细更新成功！";
                     //return RedirectToAction("Details", new { id = model.DetailID });
                     int prescriptionId = await GetPrescriptionIdByDetailIdAsync(model.DetailID);
-                    return RedirectToAction("Details", new { id = prescriptionId });
+                    return RedirectToAction("Details", new { id = model.DetailID });
                 }
                 else
                 {
@@ -516,7 +516,7 @@ namespace COMMSMVC.Controllers
         }
 
         // GET: /Prescription/Details/5
-        public async Task<IActionResult> Details(int id)  // id 为 PrescriptionID
+        public async Task<IActionResult> Details(int id)  // id 为 model.DetailID
         {
             var viewModel = await GetPrescriptionDetailViewModelAsync(id);
             if (viewModel == null)
@@ -644,7 +644,7 @@ namespace COMMSMVC.Controllers
                 TempData["ErrorMessage"] = $"删除失败：{ex.Message}";
             }
 
-            return RedirectToAction("Details", new { id = prescriptionId });
+            return RedirectToAction("Details", new { id = detailId });
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -725,6 +725,7 @@ namespace COMMSMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateDetail(CreatePrescriptionDetailModel model)
         {
+            int detailId = -1;
             if (!ModelState.IsValid)
             {
                 model.Medications = await GetMedicationSelectListAsync();
@@ -736,6 +737,7 @@ namespace COMMSMVC.Controllers
                 string insertSql = @"
             INSERT INTO PrescriptionDetails 
             (PrescriptionID, MedicationID, DoseValue, DoseUnit, Quantity, Frequency, Duration, Remarks)
+            OUTPUT INSERTED.DetailID
             VALUES (@PrescriptionID, @MedicationID, @DoseValue, @DoseUnit, @Quantity, @Frequency, @Duration, @Remarks)";
 
                 using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -751,11 +753,11 @@ namespace COMMSMVC.Controllers
                     cmd.Parameters.AddWithValue("@Remarks", model.Remarks ?? (object)DBNull.Value);
 
                     await conn.OpenAsync();
-                    await cmd.ExecuteNonQueryAsync();
+                    detailId = (int)await cmd.ExecuteScalarAsync();
                 }
 
                 TempData["SuccessMessage"] = "药品明细添加成功！";
-                return RedirectToAction("Details", new { id = model.PrescriptionID });
+                return RedirectToAction("Details", new { id = detailId });
             }
             catch (Exception ex)
             {

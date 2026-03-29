@@ -501,59 +501,118 @@ namespace COMMSMVC.Controllers
             // 🔥 关键：SQL 里 不声明 declare @AppointmentID
             // 🔥 直接使用 C# 传进去的 @AppointmentID
             string sql = @"
---declare @AppointmentID int;
-declare @IsSuccess bit ;
-declare @Message Nvarchar(Max);
-BEGIN TRANSACTION; -- 开始事务
+BEGIN TRANSACTION;
 
 BEGIN TRY
-	set @IsSuccess=0
-    -- 1. 更新药品库存：Stock = Stock - 已开药的数量
-    UPDATE m
-    SET m.Stock = m.Stock - pd.Quantity
+    --DECLARE @AppointmentID int =0;
+    DECLARE @IsSuccess BIT = 0;
+    DECLARE @Message NVARCHAR(MAX) = '';
+    DECLARE @Count1 INT, @Count2 INT;
+
+    -- ==============================================
+    -- 第一步：查询【待发药药品数量】 和 【处方明细数量】
+    -- ==============================================
+    SELECT @Count1 = count(1)
     FROM Medications m
     INNER JOIN PrescriptionDetails pd ON m.MedicationID = pd.MedicationID
     INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
     INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
-	INNER JOIN Patients p ON a.PatientID = p.PatientID
-    WHERE 
-        a.AppointmentID = @AppointmentID 
+    INNER JOIN Patients p ON a.PatientID = p.PatientID
+    WHERE
+        a.AppointmentID = @AppointmentID
         AND m.MedicationID IS NOT NULL
         AND m.Name IS NOT NULL
         AND pd.Quantity IS NOT NULL
         AND pd.Remarks <> '已发药';
-		
 
+    SELECT @Count2 = count(1)
+    FROM PrescriptionDetails pd
+    INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
+    INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
+    INNER JOIN Patients p ON a.PatientID = p.PatientID
+    WHERE
+        a.AppointmentID = @AppointmentID
+        AND pd.Remarks <> '已发药';
 
-    -- 2. 更新处方明细状态为：已发药
+    -- ==============================================
+    -- 第二步：判断是否有可发药（必须两条都>0）
+    -- ==============================================
+    IF @Count1 <= 0 OR @Count2 <= 0
+    BEGIN
+        SET @IsSuccess = 0;
+        SET @Message = '无待发药数据 或 数据异常，无法发药';
+        ROLLBACK TRANSACTION;
+        SELECT @IsSuccess AS IsSuccess, @Message AS Message;
+        RETURN;
+    END;
+
+    -- ==============================================
+    -- 第三步：扣库存
+    -- ==============================================
+/*  
+   UPDATE m
+   SET m.Stock = m.Stock - pd.Quantity
+   FROM Medications m
+   INNER JOIN PrescriptionDetails pd ON m.MedicationID = pd.MedicationID
+   INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
+   INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
+   INNER JOIN Patients p ON a.PatientID = p.PatientID
+   WHERE
+       a.AppointmentID = @AppointmentID
+       AND m.MedicationID IS NOT NULL
+       AND m.Name IS NOT NULL
+       AND pd.Quantity IS NOT NULL
+    --     AND pd.Remarks <> '已发药';--更新
+*/
+            UPDATE m
+            SET m.Stock = m.Stock - total.TotalQuantity
+            FROM Medications m
+            INNER JOIN (
+                SELECT 
+                    pd.MedicationID,
+                    SUM(pd.Quantity) AS TotalQuantity
+                FROM PrescriptionDetails pd
+                INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
+                INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
+                WHERE
+                    a.AppointmentID = @AppointmentID
+                    AND pd.Quantity IS NOT NULL
+                    AND pd.Remarks <> '已发药'
+                GROUP BY pd.MedicationID
+            ) total ON m.MedicationID = total.MedicationID;
+
+    -- ==============================================
+    -- 第四步：更新发药状态
+    -- ==============================================
     UPDATE pd
     SET pd.Remarks = '已发药'
     FROM PrescriptionDetails pd
     INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
     INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
-	INNER JOIN Patients p ON a.PatientID = p.PatientID
-    WHERE 
+    INNER JOIN Patients p ON a.PatientID = p.PatientID
+    WHERE
         a.AppointmentID = @AppointmentID
         AND pd.Remarks <> '已发药';
 
+--顺便更新
+update Appointments set status='已完成' where AppointmentID=@AppointmentID
+update MedicalRecords set status='已完成' where AppointmentID=@AppointmentID
+--顺便更新
 
-
-    COMMIT TRANSACTION; -- 全部成功，提交
-	set @IsSuccess= 1;
-    set @Message = '发药成功：库存已扣减，状态已更新';
+    -- ==============================================
+    -- 成功
+    -- ==============================================
+    COMMIT TRANSACTION;
+    SET @IsSuccess = 1;
+    SET @Message = '发药成功：库存已扣减，状态已更新';
 END TRY
 BEGIN CATCH
-    ROLLBACK TRANSACTION; -- 出错，回滚（库存不变，状态不变）
-    set @Message = '发药失败：已回滚';
-	  SET @Message = '发药失败：已回滚。错误信息：' + ERROR_MESSAGE();
-    --THROW; -- 抛出错误信息
+    ROLLBACK TRANSACTION;
+    SET @IsSuccess = 0;
+    SET @Message = '发药失败：' + ERROR_MESSAGE();
 END CATCH
--- 输出结果（给你看成功还是失败）
-SELECT 
-    @IsSuccess AS IsSuccess,
-    @Message AS Message;
-         
-";
+
+SELECT @IsSuccess AS IsSuccess, @Message AS Message;";
             try
             {
                 using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -571,7 +630,10 @@ SELECT
                             string message = reader.GetString(reader.GetOrdinal("Message"));
 
                             if (isSuccess)
+                            {
                                 TempData["SuccessMessage"] = message;
+                                return RedirectToAction(nameof(DispenseResult), new { appointmentId = id, message = message });
+                            }
                             else
                                 TempData["ErrorMessage"] = message;
                         }
@@ -586,6 +648,14 @@ SELECT
             // 发药后重定向回待发药清单页面
             return RedirectToAction(nameof(CheckDispenseMedication), new { id = id });
           
+        }
+
+        [HttpGet]
+        public IActionResult DispenseResult(int appointmentId, string message)
+        {
+            ViewBag.AppointmentId = appointmentId;
+            ViewBag.Message = message;
+            return View();
         }
         #endregion
     }
