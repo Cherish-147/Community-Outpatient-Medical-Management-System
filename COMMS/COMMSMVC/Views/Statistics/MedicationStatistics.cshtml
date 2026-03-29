@@ -1,0 +1,108 @@
+﻿@model COMMSMVC.Models.Statistics.MedicationChartViewModel
+@{
+    ViewData["Title"] = "药品统计图";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .chart-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .chart-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    canvas {
+        max-width: 100%;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="chart-container">
+    <h2 class="chart-title">药品库存统计图</h2>
+    <canvas id="stockChart" width="800" height="400"></canvas>
+
+    <h2 class="chart-title">药品价格统计图</h2>
+    <canvas id="priceChart" width="800" height="400"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // 从模型获取数据（转为JS数组）
+    const names = @Html.Raw(Json.Serialize(Model.Names));
+    const stocks = @Html.Raw(Json.Serialize(Model.Stocks));
+    const prices = @Html.Raw(Json.Serialize(Model.Prices));
+
+    // 库存柱状图
+    const ctxStock = document.getElementById('stockChart').getContext('2d');
+    new Chart(ctxStock, {
+    type: 'bar',
+    data: {
+    labels: names,
+    datasets: [{
+    label: '库存量',
+    data: stocks,
+    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+    borderColor: 'rgba(54, 162, 235, 1)',
+    borderWidth: 1
+    }]
+    },
+    options: {
+    responsive: true,
+    scales: {
+    y: {
+    beginAtZero: true,
+    title: { display: true, text: '库存数量' }
+    },
+    x: {
+    title: { display: true, text: '药品名称' },
+    ticks: { autoSkip: true, maxRotation: 45 }
+    }
+    },
+    plugins: {
+    tooltip: { callbacks: { label: (ctx) => `${ctx.raw} 件` } }
+    }
+    }
+    });
+
+    // 价格柱状图
+    const ctxPrice = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctxPrice, {
+    type: 'bar',
+    data: {
+    labels: names,
+    datasets: [{
+    label: '单价（元）',
+    data: prices,
+    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+    borderColor: 'rgba(255, 99, 132, 1)',
+    borderWidth: 1
+    }]
+    },
+    options: {
+    responsive: true,
+    scales: {
+    y: {
+    beginAtZero: true,
+    title: { display: true, text: '价格 (元)' }
+    },
+    x: {
+    title: { display: true, text: '药品名称' },
+    ticks: { autoSkip: true, maxRotation: 45 }
+    }
+    },
+    plugins: {
+    tooltip: { callbacks: { label: (ctx) => `¥ ${ctx.raw.toFixed(2)}` } }
+    }
+    }
+    });
+</script>
