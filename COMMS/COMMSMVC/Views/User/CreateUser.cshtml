@@ -150,7 +150,7 @@
                         <label class="form-label">
                             输入密码 <span class="required-mark">*</span>
                         </label>
-                        <input type="text" class="form-control" asp-for="Password"  maxlength="50">
+                        <input type="password" class="form-control" asp-for="Password" maxlength="50">
                     </div>
                 </div>
                  <div class="form-col">
@@ -158,7 +158,7 @@
                         <label class="form-label">
                             确认密码 <span class="required-mark">*</span><!-- 新增两次密码校验 -->
                         </label>
-                        <input type="text" class="form-control" asp-for="TwoPassword" maxlength="50">
+                        <input type="password" class="form-control" asp-for="TwoPassword" maxlength="50">
                     </div>
                 </div>
                 <div class="form-col">
@@ -186,11 +186,11 @@
                 </div>
             </div>
 
-            <div class="form-group mb-4">
-                <label class="form-label">
+            <div class="form-group mb-4" >
+                <label class="form-label" >
                     状态
                 </label>
-                <select class="form-control" asp-for="IsActive">
+                <select class="form-control" asp-for="IsActive" >
                     <option value="1">启用</option>
                     <option value="0">禁用</option>
                 </select>

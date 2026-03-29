@@ -1,6 +1,6 @@
-﻿@model COMMSMVC.Models.Patient
+﻿@model COMMSMVC.Models.EditPatientModel
 @{
-    ViewData["Title"] = "新增患者";
+    ViewData["Title"] = "编辑患者";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @using Microsoft.AspNetCore.Mvc.Rendering
@@ -96,38 +96,63 @@
         margin-top: 0.25rem;
         display: block;
     }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
 </style>
 
 <div class="form-container">
-    <h2 class="form-title">新增患者</h2>
+    <h2 class="form-title">编辑患者信息</h2>
 
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
     }
 
-    <form asp-action="CreatePost" method="post">
+    <form asp-action="EditpatientByPatientId" method="post">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@ViewContext.RouteData.Values["id"]" />
 
         <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="UserId" class="form-label">关联用户</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <select asp-for="UserId" class="form-select" style="flex: 1;" asp-items="ViewBag.Users">
-                            <option value="">-- 请选择用户 --</option>
-                        </select>
-                        <a asp-controller="User" asp-action="CreateUser" class="btn btn-secondary" style="white-space: nowrap;">+ 新建用户</a>
-                    </div>
-                    <small class="form-text text-muted">若无找到自己创建用户，请点击“新建用户”创建</small>
+                    <select asp-for="UserId" class="form-select" asp-items="ViewBag.Users">
+                        <option value="">-- 不关联用户 --</option>
+                    </select>
                     <span asp-validation-for="UserId" class="text-danger"></span>
                 </div>
-                 
+            </div>
             <div class="col">
                 <div class="form-group">
                     <label asp-for="Name" class="form-label">姓名 <span class="required-mark">*</span></label>
                     <input asp-for="Name" class="form-control" />
                     <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label asp-for="Birthday" class="form-label">出生日期</label>
+                    <input asp-for="Birthday" type="date" class="form-control" />
+                    <span asp-validation-for="Birthday" class="text-danger"></span>
                 </div>
             </div>
             <div class="col">
@@ -146,21 +171,11 @@
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <label asp-for="Birthday" class="form-label">出生日期</label>
-                    <input asp-for="Birthday" type="date" class="form-control" />
-                    <span asp-validation-for="Birthday" class="text-danger"></span>
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
                     <label asp-for="IDCard" class="form-label">身份证号</label>
                     <input asp-for="IDCard" class="form-control" />
                     <span asp-validation-for="IDCard" class="text-danger"></span>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="Phone" class="form-label">电话</label>
@@ -168,6 +183,9 @@
                     <span asp-validation-for="Phone" class="text-danger"></span>
                 </div>
             </div>
+        </div>
+
+        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="InsuranceNo" class="form-label">医保号</label>
@@ -175,9 +193,6 @@
                     <span asp-validation-for="InsuranceNo" class="text-danger"></span>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="IsMarried" class="form-label">婚姻状况</label>
@@ -189,6 +204,9 @@
                     <span asp-validation-for="IsMarried" class="text-danger"></span>
                 </div>
             </div>
+        </div>
+
+        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="Nation" class="form-label">民族</label>
@@ -196,9 +214,6 @@
                     <span asp-validation-for="Nation" class="text-danger"></span>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="WorkUnit" class="form-label">工作单位</label>
@@ -206,6 +221,9 @@
                     <span asp-validation-for="WorkUnit" class="text-danger"></span>
                 </div>
             </div>
+        </div>
+
+        <div class="row">
             <div class="col">
                 <div class="form-group">
                     <label asp-for="Occupation" class="form-label">职业</label>
@@ -278,8 +296,8 @@
             <span asp-validation-for="Remark" class="text-danger"></span>
         </div>
 
-        <button type="submit" class="btn-submit">保存患者信息</button>
-        <a asp-action="GetAllPatientsIndex" class="btn-back">← 返回患者列表</a>
+        <button type="submit" class="btn-submit">保存修改</button>
+        <a asp-action="DetailpatientByPatientId" asp-route-id="@ViewContext.RouteData.Values["id"]" class="btn-back">← 返回详情</a>
     </form>
 </div>
 

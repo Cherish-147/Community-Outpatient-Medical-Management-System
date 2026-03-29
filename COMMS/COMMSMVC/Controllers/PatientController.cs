@@ -198,7 +198,7 @@ namespace COMMSMVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var users = await GetAllUsersAsync();
+            var users = await GetUnlinkedUserIds();
             var userItems = users.Select(u => new SelectListItem
             {
                 Value = u.UserId.ToString(),
@@ -247,6 +247,7 @@ namespace COMMSMVC.Controllers
          CreatedAt, UpdatedAt, IsMarried, Nation, WorkUnit, Occupation, 
          Address, PastMedicalHistory, DrugAllergyHistory, GuardianName, 
          GuardianRelationship, GuardianAddress, GuardianPhone, Remark)
+        OUTPUT INSERTED.PatientID
         VALUES 
         (@UserId, @Name, @Birthday, @Gender, @IDCard, @Phone, @InsuranceNo,
          @CreatedAt, @UpdatedAt, @IsMarried, @Nation, @WorkUnit, @Occupation,
@@ -284,10 +285,20 @@ namespace COMMSMVC.Controllers
             }
         }
 
-        public async Task<List<BindUsers>> GetAllUsersAsync()//方法--获取所有用户信息（用于患者注册时选择关联用户）
+        public async Task<List<BindUsers>> GetUnlinkedUserIds()//方法--获取所有用户信息（用于患者注册时选择关联用户）
         {
             var users = new List<BindUsers>();
-            string sql = "SELECT UserId, UserName FROM Users";
+            string sql = @"
+select u.UserId,u.UserName from Users u 
+left join
+Patients p on p.UserId =u.UserId
+where p.UserId is null 
+and u.Role='Patient'
+/*
+select u.UserId,u.UserName from Users u where u.UserId 
+not in (select p.UserId from Patients p) and role='Patient'
+*/
+";
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
@@ -306,6 +317,308 @@ namespace COMMSMVC.Controllers
             }
             return users;
         }
+
+        //患者详细信息
+        [HttpGet]
+        public async Task<IActionResult> DetailpatientByPatientId(int patientId)
+        {
+
+            var result = await  DetailpatientByPatientIdInfo(patientId);
+            if (!result.IsSuccess)
+            {
+                TempData["ErrorMessage"] = result.Message;
+                return RedirectToAction(nameof(GetAllPatientsIndex));
+            }
+            return View(result);
+
+        }
+
+        public virtual async Task<DetailPatientModel> DetailpatientByPatientIdInfo(int patientId)
+        {
+            var patient = new DetailPatientModel();
+            string sql = @"
+SELECT  [PatientID]
+      ,[UserId]
+      ,[Name]
+      ,[Birthday]
+      ,[Gender]
+      ,[IDCard]
+      ,[Phone]
+      ,[InsuranceNo]
+      ,[CreatedAt]
+      ,[UpdatedAt]
+      ,[IsMarried]
+      ,[Nation]
+      ,[WorkUnit]
+      ,[Occupation]
+      ,[Address]
+      ,[PastMedicalHistory]
+      ,[DrugAllergyHistory]
+      ,[GuardianName]
+      ,[GuardianRelationship]
+      ,[GuardianAddress]
+      ,[GuardianPhone]
+      ,[Remark]
+  FROM [Community-Outpatient-Medical-Management-System].[dbo].[Patients]
+  where PatientID=@PatientID
+";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PatientID", patientId);
+                    await conn.OpenAsync();
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new DetailPatientModel
+                            {
+                                PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? 0 : reader.GetInt32(reader.GetOrdinal("UserId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                                Gender = reader.GetString(reader.GetOrdinal("Gender")),
+                                IDCard = reader.GetString(reader.GetOrdinal("IDCard")),
+                                Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                                InsuranceNo = reader.GetString(reader.GetOrdinal("InsuranceNo")),
+                                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                                IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
+                                Nation = reader.IsDBNull(reader.GetOrdinal("Nation")) ? null : reader.GetString(reader.GetOrdinal("Nation")),
+                                WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit")) ? null : reader.GetString(reader.GetOrdinal("WorkUnit")),
+                                Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation")) ? null : reader.GetString(reader.GetOrdinal("Occupation")),
+                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                                PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory")) ? null : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
+                                DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory")) ? null : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
+                                GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName")) ? null : reader.GetString(reader.GetOrdinal("GuardianName")),
+                                GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship")) ? null : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
+                                GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress")) ? null : reader.GetString(reader.GetOrdinal("GuardianAddress")),
+                                GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone")) ? null : reader.GetString(reader.GetOrdinal("GuardianPhone")),
+                                Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? null : reader.GetString(reader.GetOrdinal("Remark")),
+                                IsSuccess = true,
+                                Message = null
+                            };
+                        }
+                        else
+                        {
+                            return new DetailPatientModel
+                            {
+                                IsSuccess = false,
+                                Message = $"未找到ID为 {patientId} 的患者记录。"
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new DetailPatientModel
+                {
+                    IsSuccess = false,
+                    Message = $"查询失败：{ex.Message}"
+                };
+            }
+        
+            return patient;
+        }
+
+        // 患者信息编辑Start
+        // 获取患者信息用于编辑
+        public virtual async Task<EditPatientModel> GetPatientForEditAsync(int patientId)
+        {
+            string sql = @"
+        SELECT PatientID, UserId, Name, Birthday, Gender, IDCard, Phone, 
+               InsuranceNo, CreatedAt, UpdatedAt, IsMarried, Nation, WorkUnit, 
+               Occupation, Address, PastMedicalHistory, DrugAllergyHistory, 
+               GuardianName, GuardianRelationship, GuardianAddress, GuardianPhone, Remark
+        FROM Patients 
+        WHERE PatientID = @PatientID";
+
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PatientID", patientId);
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new EditPatientModel
+                            {
+                                IsSuccess = true,
+                                Message = null,
+                                // PatientID 不需要在模型中展示，但可以内部使用，不过模型已注释，可忽略
+                                UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? 0 : reader.GetInt32(reader.GetOrdinal("UserId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                                Gender = reader.GetString(reader.GetOrdinal("Gender")),
+                                IDCard = reader.GetString(reader.GetOrdinal("IDCard")),
+                                Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                                InsuranceNo = reader.GetString(reader.GetOrdinal("InsuranceNo")),
+                                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                                IsMarried = reader.IsDBNull(reader.GetOrdinal("IsMarried")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("IsMarried")),
+                                Nation = reader.IsDBNull(reader.GetOrdinal("Nation")) ? null : reader.GetString(reader.GetOrdinal("Nation")),
+                                WorkUnit = reader.IsDBNull(reader.GetOrdinal("WorkUnit")) ? null : reader.GetString(reader.GetOrdinal("WorkUnit")),
+                                Occupation = reader.IsDBNull(reader.GetOrdinal("Occupation")) ? null : reader.GetString(reader.GetOrdinal("Occupation")),
+                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                                PastMedicalHistory = reader.IsDBNull(reader.GetOrdinal("PastMedicalHistory")) ? null : reader.GetString(reader.GetOrdinal("PastMedicalHistory")),
+                                DrugAllergyHistory = reader.IsDBNull(reader.GetOrdinal("DrugAllergyHistory")) ? null : reader.GetString(reader.GetOrdinal("DrugAllergyHistory")),
+                                GuardianName = reader.IsDBNull(reader.GetOrdinal("GuardianName")) ? null : reader.GetString(reader.GetOrdinal("GuardianName")),
+                                GuardianRelationship = reader.IsDBNull(reader.GetOrdinal("GuardianRelationship")) ? null : reader.GetString(reader.GetOrdinal("GuardianRelationship")),
+                                GuardianAddress = reader.IsDBNull(reader.GetOrdinal("GuardianAddress")) ? null : reader.GetString(reader.GetOrdinal("GuardianAddress")),
+                                GuardianPhone = reader.IsDBNull(reader.GetOrdinal("GuardianPhone")) ? null : reader.GetString(reader.GetOrdinal("GuardianPhone")),
+                                Remark = reader.IsDBNull(reader.GetOrdinal("Remark")) ? null : reader.GetString(reader.GetOrdinal("Remark"))
+                            };
+                        }
+                        else
+                        {
+                            return new EditPatientModel
+                            {
+                                IsSuccess = false,
+                                Message = $"未找到ID为 {patientId} 的患者。"
+                            };
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new EditPatientModel
+                {
+                    IsSuccess = false,
+                    Message = $"查询失败：{ex.Message}"
+                };
+            }
+        }
+
+        // 更新患者信息
+        public virtual async Task<bool> UpdatePatientAsync(EditPatientModel model, int patientId)
+        {
+            string updateSql = @"
+        UPDATE Patients 
+        SET UserId = @UserId,
+            Name = @Name,
+            Birthday = @Birthday,
+            Gender = @Gender,
+            IDCard = @IDCard,
+            Phone = @Phone,
+            InsuranceNo = @InsuranceNo,
+            UpdatedAt = @UpdatedAt,
+            IsMarried = @IsMarried,
+            Nation = @Nation,
+            WorkUnit = @WorkUnit,
+            Occupation = @Occupation,
+            Address = @Address,
+            PastMedicalHistory = @PastMedicalHistory,
+            DrugAllergyHistory = @DrugAllergyHistory,
+            GuardianName = @GuardianName,
+            GuardianRelationship = @GuardianRelationship,
+            GuardianAddress = @GuardianAddress,
+            GuardianPhone = @GuardianPhone,
+            Remark = @Remark
+        WHERE PatientID = @PatientID";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(updateSql, conn))
+            {
+                cmd.Parameters.AddWithValue("@UserId", model.UserId == 0 ? (object)DBNull.Value : model.UserId);
+                cmd.Parameters.AddWithValue("@Name", model.Name ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Birthday", model.Birthday ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Gender", model.Gender ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IDCard", model.IDCard ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Phone", model.Phone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@InsuranceNo", model.InsuranceNo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@IsMarried", model.IsMarried ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Nation", model.Nation ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@WorkUnit", model.WorkUnit ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Occupation", model.Occupation ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Address", model.Address ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@PastMedicalHistory", model.PastMedicalHistory ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@DrugAllergyHistory", model.DrugAllergyHistory ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianName", model.GuardianName ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianRelationship", model.GuardianRelationship ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianAddress", model.GuardianAddress ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@GuardianPhone", model.GuardianPhone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Remark", model.Remark ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+
+                await conn.OpenAsync();
+                int rows = await cmd.ExecuteNonQueryAsync();
+                return rows > 0;
+            }
+        }
+        public async Task<List<BindUsers>> GetAllUsersAsync()//方法--获取所有用户信息（用于患者注册时选择关联用户）
+        {
+            var users = new List<BindUsers>();
+            string sql = "SELECT UserId, UserName FROM Users where Role ='Patient'";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        users.Add(new BindUsers
+                        {
+                            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                            UserName = reader.GetString(reader.GetOrdinal("UserName"))
+                        });
+                    }
+                }
+            }
+            return users;
+        }
+        //控制器
+        [HttpGet]
+        public async Task<IActionResult> EditpatientByPatientId(int id)
+        {
+            var model = await GetPatientForEditAsync(id);
+            if (!model.IsSuccess)
+            {
+                TempData["ErrorMessage"] = model.Message;
+                return RedirectToAction(nameof(GetAllPatientsIndex));
+            }
+            var users = await GetAllUsersAsync();
+            ViewBag.Users = new SelectList(users, "UserId", "UserName", model.UserId);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditpatientByPatientId(int id, EditPatientModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var users = await GetAllUsersAsync();
+                ViewBag.Users = new SelectList(users, "UserId", "UserName", model.UserId);
+                return View(model);
+            }
+
+            bool success = await UpdatePatientAsync(model, id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "患者信息更新成功！";
+                return RedirectToAction(nameof(DetailpatientByPatientId), new { patientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "更新失败，请稍后重试。";
+                var users = await GetAllUsersAsync();
+                ViewBag.Users = new SelectList(users, "UserId", "UserName", model.UserId);
+                return View(model);
+            }
+        }
+
+        //患者信息编辑END
         #endregion
         // 患者首页
         // 1. 挂号首页（选择排班+患者信息）- 优化剩余号源计算

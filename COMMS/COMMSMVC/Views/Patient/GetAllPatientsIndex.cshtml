@@ -175,7 +175,7 @@
                     <td>@item.Phone</td>
                     <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="action-links">
-                        <a asp-action="DetailpatientByPatientId" asp-route-id="@item.PatientID">详情</a>
+                        <a asp-action="DetailpatientByPatientId" asp-route-patientId="@item.PatientID">详情</a>
                         <a asp-action="EditpatientByPatientId" asp-route-id="@item.PatientID">编辑</a>
                         <a asp-action="Delete" asp-route-id="@item.PatientID" onclick="return confirm('确定要删除该患者吗？')">删除</a>
                     </td>
