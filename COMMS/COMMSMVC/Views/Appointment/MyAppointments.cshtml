@@ -104,6 +104,22 @@
             text-decoration: none;
         }
 
+    .btn-restore {
+        background-color: #155724;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+
+        .btn-restore:hover {
+            background-color: #155724;
+            color: white;
+            text-decoration: none;
+        }
+
     .btn-back {
         background-color: #6c757d;
         color: white;
@@ -171,6 +187,7 @@
                         <th>备注</th>
                         <th>挂号时间</th>
                         <th>操作</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -208,6 +225,19 @@
                                 {
                                     <a href="/Appointment/Cancel/@row["AppointmentID"]" class="btn-cancel" onclick="return confirm('确认取消该挂号吗？取消后号源将自动恢复，可重新预约！')">
                                         <i class="bi bi-x-circle"></i> 取消挂号
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <!-- 替换原有取消按钮代码 -->
+                                @if (row["Status"].ToString() == "已取消" && Convert.ToDateTime(row["Date"]) >= DateTime.Today)
+                                {
+                                    <a href="/Appointment/Restore/@row["AppointmentID"]" class="btn-restore" onclick="return confirm('确认恢复该挂号吗？')">
+                                        <i class="bi bi-x-circle"></i> 恢复挂号
                                     </a>
                                 }
                                 else

@@ -657,6 +657,96 @@ SELECT @IsSuccess AS IsSuccess, @Message AS Message;";
             ViewBag.Message = message;
             return View();
         }
+
+        //已发药清单
+        /// <summary>
+        /// 获取已发药清单（按预约ID筛选，可选）
+        /// </summary>
+        /// <param name="appointmentID">预约ID（可为空）</param>
+        /// <returns>已发药记录列表</returns>
+        public virtual async Task<List<CheckDispenseMedicationModel>> GetDispensedMedicationInfo(int? appointmentID)
+        {
+            var dispensedList = new List<CheckDispenseMedicationModel>();
+            string sql = @"
+        SELECT
+            p.PatientID,
+            p.Name       AS PatientName,
+            a.AppointmentID,
+            pr.PrescriptionID,
+            pd.DetailID,
+            m.MedicationID,
+            m.Name       AS MedicationName,
+            pd.Quantity  AS Quantity,
+            m.Stock      AS Stock,
+            pd.Remarks   AS Remarks
+        FROM Prescriptions pr
+        INNER JOIN Appointments a      ON pr.AppointmentID = a.AppointmentID
+        INNER JOIN Patients p          ON a.PatientID       = p.PatientID
+        INNER JOIN PrescriptionDetails pd ON pr.PrescriptionID = pd.PrescriptionID
+        INNER JOIN Medications m       ON pd.MedicationID   = m.MedicationID
+        WHERE pd.Remarks = '已发药'                         -- 只查已发药
+          AND m.MedicationID IS NOT NULL
+          AND m.Name IS NOT NULL
+          AND pd.Quantity IS NOT NULL
+    ";
+
+            // 动态添加预约ID筛选
+            if (appointmentID.HasValue)
+            {
+                sql += " AND a.AppointmentID = @AppointmentID";
+            }
+            sql += " ORDER BY pd.DetailID";
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    if (appointmentID.HasValue)
+                    {
+                        cmd.Parameters.Add("@AppointmentID", SqlDbType.Int).Value = appointmentID.Value;
+                    }
+                    await conn.OpenAsync();
+
+                    using SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var model = new CheckDispenseMedicationModel
+                        {
+                            IsSuccess = true,
+                            Message = null,
+                            PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                            PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            PrescriptionID = reader.GetInt32(reader.GetOrdinal("PrescriptionID")),
+                            DetailID = reader.GetInt32(reader.GetOrdinal("DetailID")),
+                            MedicationID = reader.GetInt32(reader.GetOrdinal("MedicationID")),
+                            MedicationName = reader.GetString(reader.GetOrdinal("MedicationName")),
+                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                            Stock = reader.GetInt32(reader.GetOrdinal("Stock")),
+                            Remarks = reader.IsDBNull(reader.GetOrdinal("Remarks")) ? null : reader.GetString(reader.GetOrdinal("Remarks"))
+                        };
+                        dispensedList.Add(model);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                dispensedList.Add(new CheckDispenseMedicationModel
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                });
+            }
+            return dispensedList;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DispensedMedication(int? id) // id = AppointmentID
+        {
+            var model = await GetDispensedMedicationInfo(id);
+            return View(model);
+        }
         #endregion
     }
 }

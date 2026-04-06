@@ -120,9 +120,17 @@
 
         <div class="form-group">
             <label class="form-label">选择预约</label>
-            <select asp-for="Payment.AppointmentID" class="form-select" asp-items="Model.AppointmentList">
-                <option value="">-- 请选择预约 --</option>
-            </select>
+            @if (ViewBag.IsAppointmentFixed == true)
+            {
+                <input type="hidden" asp-for="Payment.AppointmentID" />
+                <input type="text" class="form-control" value="@Model.AppointmentList?.FirstOrDefault(x => x.Value == Model.Payment.AppointmentID.ToString())?.Text" readonly />
+            }
+            else
+            {
+                <select asp-for="Payment.AppointmentID" class="form-select" asp-items="Model.AppointmentList">
+                    <option value="">-- 请选择预约 --</option>
+                </select>
+            }
             <span asp-validation-for="Payment.AppointmentID" class="text-danger"></span>
         </div>
 

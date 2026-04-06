@@ -40,7 +40,7 @@ namespace COMMSMVC.Controllers
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
-                conn.OpenAsync();
+               await conn.OpenAsync();
                 using (SqlDataReader reader =await cmd.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -216,7 +216,7 @@ namespace COMMSMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? appointmentID)
         {
             var appointments = await GetAppointmentsForPaymentSelectAsync();
             var viewModel = new CreatePaymentViewModel
@@ -224,6 +224,12 @@ namespace COMMSMVC.Controllers
                 Payment = new Payment(),
                 AppointmentList = new SelectList(appointments, "Value", "Text")
             };
+            // 如果传入了 appointmentID，则预选该预约
+            if (appointmentID.HasValue)
+            {
+                viewModel.Payment.AppointmentID = appointmentID.Value;
+            }
+
             return View(viewModel);
         }
 
@@ -231,13 +237,13 @@ namespace COMMSMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreatePaymentViewModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                // 验证失败，重新加载下拉列表
-                var appointments = await GetAppointmentsForPaymentSelectAsync();
-                model.AppointmentList = new SelectList(appointments, "Value", "Text");
-                return View(model);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    // 验证失败，重新加载下拉列表
+            //    var appointments = await GetAppointmentsForPaymentSelectAsync();
+            //    model.AppointmentList = new SelectList(appointments, "Value", "Text");
+            //    return View(model);
+            //}
 
             // 设置支付时间为当前时间
             model.Payment.PaidAt = DateTime.Now;
@@ -307,6 +313,43 @@ namespace COMMSMVC.Controllers
             return items;
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public  async Task<IActionResult> Delete(int id)
+        {
+            bool success = await DeleteAsync(id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "支付记录删除成功！";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "删除失败，请稍后重试。";
+            }
+            return RedirectToAction(nameof(Index));
+
+        }
+        public virtual async Task<bool> DeleteAsync(int paymentID)
+        {
+            string sql = "DELETE FROM [Payments] WHERE PaymentID = @PaymentID";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PaymentID", paymentID);
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    return rowsAffected > 0; // 至少删除一行才算成功
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "删除支付记录失败，PaymentID: {PaymentID}", paymentID);
+                return false;
+            }
+        }
 
         #region 打印
         /// <summary>

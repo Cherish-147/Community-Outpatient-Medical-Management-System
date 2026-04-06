@@ -126,7 +126,12 @@
                     <td class="action-links">
                         <a asp-action="Detail" asp-route-id="@item.PaymentID">详情</a>
                         <a asp-action="Edit" asp-route-id="@item.PaymentID">编辑</a>
-                        <a asp-action="Delete" asp-route-id="@item.PaymentID" onclick="return confirm('确认删除？')">删除</a>
+                        @* <a asp-action="Delete" asp-route-id="@item.PaymentID" onclick="return confirm('确认删除？')">删除</a> *@
+                        <form asp-action="Delete" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.PaymentID" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</button>
+                        </form>
                     </td>
                 </tr>
             }

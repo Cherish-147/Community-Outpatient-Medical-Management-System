@@ -65,7 +65,17 @@ namespace COMMSMVC.Controllers
         {
             return View();
         }
-      
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+
+        }
+        [HttpPost]
+        public IActionResult Register(Users user)
+        {
+           return View();
+        }
 
         //IIS 不支持双斜杠 //
         //IIS Express 支持

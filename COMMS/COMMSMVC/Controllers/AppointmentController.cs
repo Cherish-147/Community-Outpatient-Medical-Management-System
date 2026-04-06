@@ -16,6 +16,11 @@ namespace COMMSMVC.Controllers
             baseUrl = apiConfig.Value.BaseUrl; ;
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
+        public IActionResult GetAppointmentIndex()
+        {
+            return RedirectToAction(nameof(VisitController.GetPatientAppointment), "Visit");
+
+        }
         // 1. 挂号首页（选择排班+患者信息）
         public IActionResult Index()
         {
@@ -34,17 +39,24 @@ namespace COMMSMVC.Controllers
                     conn.Open();
                     // 查询未过期且剩余号源>0的排班
                     string sql = @"
-                        SELECT s.ScheduleID, d.DoctorName, dp.DeptName, s.Date, s.TimeSlot, 
-                               s.MaxAppointments, COUNT(a.AppointmentID) AS UsedAppointments,
-                               (s.MaxAppointments - COUNT(a.AppointmentID)) AS Remaining
-                        FROM dbo.Schedules s
-                        LEFT JOIN dbo.Doctors d ON s.DoctorID = d.DoctorID
-                        LEFT JOIN dbo.Departments dp ON d.DeptID = dp.DeptID
-                        LEFT JOIN dbo.Appointments a ON s.ScheduleID = a.ScheduleID
-                        WHERE s.Date >= CONVERT(DATE, GETDATE()) AND d.IsActive = 1
-                        GROUP BY s.ScheduleID, d.DoctorName, dp.DeptName, s.Date, s.TimeSlot, s.MaxAppointments
-                        HAVING (s.MaxAppointments - COUNT(a.AppointmentID)) > 0
-                        ORDER BY s.Date, s.TimeSlot";
+                                    SELECT 
+                                        s.ScheduleID,
+                                        d.DoctorName,
+                                        dp.DeptName,
+                                        s.Date,
+                                        s.TimeSlot,
+                                        s.MaxAppointments,
+                                        COUNT(CASE WHEN a.Status <> N'已取消' THEN a.AppointmentID END) AS UsedAppointments,
+                                        (s.MaxAppointments - COUNT(CASE WHEN a.Status <> N'已取消' THEN a.AppointmentID END)) AS Remaining
+                                    FROM dbo.Schedules s
+                                    LEFT JOIN dbo.Doctors d ON s.DoctorID = d.DoctorID
+                                    LEFT JOIN dbo.Departments dp ON d.DeptID = dp.DeptID
+                                    LEFT JOIN dbo.Appointments a ON s.ScheduleID = a.ScheduleID
+                                    WHERE s.Date >= CONVERT(DATE, GETDATE()) 
+                                      AND d.IsActive = 1
+                                    GROUP BY s.ScheduleID, d.DoctorName, dp.DeptName, s.Date, s.TimeSlot, s.MaxAppointments
+                                    HAVING (s.MaxAppointments - COUNT(CASE WHEN a.Status <> N'已取消' THEN a.AppointmentID END)) > 0
+                                    ORDER BY s.Date, s.TimeSlot";
                     SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
                     adapter.Fill(dtAvailableSchedules);
                 }
@@ -284,7 +296,88 @@ namespace COMMSMVC.Controllers
 
             return RedirectToAction("MyAppointments");
         }
+        //5.恢复挂号
+        public IActionResult Restore(int id)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
 
+                    // 1. 查询当前挂号状态及排班信息
+                    string checkSql = @"
+                SELECT a.Status, s.Date, s.ScheduleID, s.MaxAppointments
+                FROM dbo.Appointments a
+                LEFT JOIN dbo.Schedules s ON a.ScheduleID = s.ScheduleID
+                WHERE a.AppointmentID = @AppointmentID";
+                    SqlCommand checkCmd = new SqlCommand(checkSql, conn);
+                    checkCmd.Parameters.AddWithValue("@AppointmentID", id);
+                    SqlDataReader reader = checkCmd.ExecuteReader();
+
+                    if (!reader.Read())
+                    {
+                        reader.Close();
+                        TempData["Error"] = "未找到该挂号记录！";
+                        return RedirectToAction("MyAppointments");
+                    }
+
+                    string status = reader["Status"].ToString();
+                    DateTime scheduleDate = Convert.ToDateTime(reader["Date"]);
+                    int scheduleId = Convert.ToInt32(reader["ScheduleID"]);
+                    int maxAppointments = Convert.ToInt32(reader["MaxAppointments"]);
+                    reader.Close();
+
+                    // 2. 验证是否可恢复：状态必须为“已取消”，且排班日期未过期
+                    if (status != "已取消")
+                    {
+                        TempData["Error"] = "只有已取消的挂号才能恢复！";
+                        return RedirectToAction("MyAppointments");
+                    }
+                    if (scheduleDate < DateTime.Today)
+                    {
+                        TempData["Error"] = "排班日期已过期，无法恢复挂号！";
+                        return RedirectToAction("MyAppointments");
+                    }
+
+                    // 3. 检查当前排班的剩余号源（仅统计状态为“已预约”的挂号）
+                    string countSql = @"
+                SELECT COUNT(1) FROM dbo.Appointments
+                WHERE ScheduleID = @ScheduleID AND [Status] = N'已预约'";
+                    SqlCommand countCmd = new SqlCommand(countSql, conn);
+                    countCmd.Parameters.AddWithValue("@ScheduleID", scheduleId);
+                    int used = (int)countCmd.ExecuteScalar();
+                    int remaining = maxAppointments - used;
+
+                    if (remaining <= 0)
+                    {
+                        TempData["Error"] = "该排班号源已满，无法恢复挂号！";
+                        return RedirectToAction("MyAppointments");
+                    }
+
+                    // 4. 更新状态为“已预约”
+                    string updateSql = "UPDATE dbo.Appointments SET [Status] = N'已预约' WHERE AppointmentID = @AppointmentID";
+                    SqlCommand updateCmd = new SqlCommand(updateSql, conn);
+                    updateCmd.Parameters.AddWithValue("@AppointmentID", id);
+                    int rows = updateCmd.ExecuteNonQuery();
+
+                    if (rows > 0)
+                    {
+                        TempData["Success"] = "挂号已成功恢复！";
+                    }
+                    else
+                    {
+                        TempData["Error"] = "恢复挂号失败，请重试！";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "恢复挂号出错：" + ex.Message;
+            }
+
+            return RedirectToAction("MyAppointments");
+        }
         // 辅助方法：获取所有患者
         private DataTable GetAllPatients()
         {
