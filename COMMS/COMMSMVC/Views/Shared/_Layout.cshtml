@@ -86,16 +86,39 @@
 
                     <!-- 患者核心功能菜单（重构：统一样式+Action高亮） -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "active" : "")"
+@*                         <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "active" : "")"
                                href="#" role="button" data-bs-toggle="collapse"
                                data-bs-target="#patientFunctionMenu"
                                aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "true" : "false")">
                             <i class="bi bi-clipboard2-check me-2"></i> 我的就医
                         </a>
-                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "show" : "")" id="patientFunctionMenu">
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "show" : "")" id="patientFunctionMenu"> *@
+
+                        <a class="nav-link dropdown-toggle @(
+                                                           (ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex") ||
+                                                           ViewContext.RouteData.Values["Controller"].ToString() == "Appointment" ||
+                                                           ViewContext.RouteData.Values["Controller"].ToString() == "Visit" ||
+                                                           ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions"
+                                                           ? "active" : "")"
+                               href="#" role="button" data-bs-toggle="collapse"
+                               data-bs-target="#patientFunctionMenu"
+                               aria-expanded="@(
+                               (ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex") ||
+                               ViewContext.RouteData.Values["Controller"].ToString() == "Appointment" ||
+                               ViewContext.RouteData.Values["Controller"].ToString() == "Visit" ||
+                               ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions"
+                               )">
+                            <i class="bi bi-clipboard2-check me-2"></i> 我的就医
+                        </a>
+                        <div class="collapse @(
+                                 (ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex") ||
+                                 ViewContext.RouteData.Values["Controller"].ToString() == "Appointment" ||
+                                 ViewContext.RouteData.Values["Controller"].ToString() == "Visit" ||
+                                 ViewContext.RouteData.Values["Controller"].ToString() == "Prescriptions"
+                                 ? "show" : "")" id="patientFunctionMenu">
                             <ul class="list-unstyled ps-3">
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Appointment" ? "active fw-bold" : "")"
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
                                            asp-controller="Appointment" asp-action="Index">
                                         <i class="bi bi-calendar-plus me-2"></i> 预约挂号
                                     </a>
@@ -124,12 +147,12 @@
                                         <i class="bi bi-pencil me-2"></i> 个人信息
                                     </a>
                                 </li>
-                                <li class="mb-1">
+@*                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "BookDoctor" ? "active fw-bold" : "")"
                                            asp-controller="Patient" asp-action="BookDoctor">
                                         <i class="bi bi-star-medical me-2"></i> 常用医生
                                     </a>
-                                </li>
+                                </li> *@
                             </ul>
                         </div>
                     </li>

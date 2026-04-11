@@ -22,6 +22,7 @@ namespace COMMSMVC.Controllers
 
         }
         // 1. 挂号首页（选择排班+患者信息）
+        [HttpGet]
         public IActionResult Index()
         {
             // 验证登录状态（患者/管理员均可访问）
