@@ -242,7 +242,8 @@ namespace COMMSMVC.Controllers
             SELECT a.AppointmentID, p.Name AS PatientName
             FROM Appointments a
             INNER JOIN Patients p ON a.PatientID = p.PatientID
-            WHERE a.Status IN ('已叫号', '已就诊')
+            WHERE a.Status NOT IN ('已完成','已开药')   
+            --and a.Status IN ('已叫号', '已就诊')
             ORDER BY a.AppointmentID DESC";
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
