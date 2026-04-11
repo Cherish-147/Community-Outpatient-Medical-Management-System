@@ -38,7 +38,7 @@
                     <span class="text-white me-3">
                         <i class="bi bi-person"></i> @Context.Session.GetString("Username")
                     </span>
-                    <a class="nav-link text-white me-2" asp-controller="Patient" asp-action="EditProfile">
+                    <a class="nav-link text-white me-2" asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")">
                         <i class="bi bi-gear"></i> 个人设置
                     </a>
                     <a class="nav-link text-white" asp-controller="Home" asp-action="Logout">
@@ -85,14 +85,14 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "active" : "")"
-                   asp-controller="Patient" asp-action="EditProfile">
+                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "DetailpatientByPatientId" ? "active" : "")"
+                       asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")">
                     <i class="bi bi-person-pin me-2"></i> 个人信息管理
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "MyPayments" ? "active" : "")"
-                   asp-controller="Patient" asp-action="MyPayments">
+                       asp-controller="Patient" asp-action="MyPayments" asp-route-patientId="PatientId">
                     <i class="bi bi-cash-coin me-2"></i> 缴费记录
                 </a>
             </li>

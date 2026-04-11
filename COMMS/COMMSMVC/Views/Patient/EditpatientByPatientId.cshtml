@@ -297,7 +297,16 @@
         </div>
 
         <button type="submit" class="btn-submit">保存修改</button>
+        @if(@Context.Session.GetString("Role") == "Patient")
+        {
+            <a asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")" class="btn-back">← 返回详情</a>
+        }
+        else
+        {
         <a asp-action="DetailpatientByPatientId" asp-route-id="@ViewContext.RouteData.Values["id"]" class="btn-back">← 返回详情</a>
+        }
+        
+        @*DetailpatientByPatientId*@
     </form>
 </div>
 

@@ -502,6 +502,71 @@ namespace COMMSMVC.Controllers
                 return File(screenshot, "image/png", $"支付详情_{id}.png");
             }
         }
+        // GET: 显示支付确认页面
+        [HttpGet]
+        public async Task<IActionResult> ConfirmPay(int id)
+        {
+            // 根据 PaymentID 查询支付记录，验证状态是否为“待支付”
+            // 此处仅为示例，实际应调用服务层方法
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null || payment.Status != "待支付")
+            {
+                TempData["ErrorMessage"] = "该支付记录不存在或已支付！";
+                return RedirectToAction("MyPayments");
+            }
+
+            // 模拟支付成功，更新状态为“已支付”
+            bool success = await UpdatePaymentStatusAsync(id, "已支付");
+            if (success)
+            {
+                TempData["SuccessMessage"] = "支付成功！";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "支付失败，请稍后重试。";
+            }
+            return RedirectToAction(nameof(PatientController.MyPayments), "Patient");
+        }
+
+        // POST: 执行支付
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmPay(int id, string paymentMethod)
+        {
+            var payment = await GetPaymentByIdAsync(id);
+            if (payment == null || payment.Status != "待支付")
+            {
+                TempData["ErrorMessage"] = "支付记录无效或已支付。";
+                return RedirectToAction("MyPayments");
+            }
+
+            // 更新支付状态、支付方式、支付时间
+            bool success = await UpdatePaymentStatusAsync(id, paymentMethod);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "支付成功！";
+                return RedirectToAction("MyPayments");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "支付失败，请稍后重试。";
+                return RedirectToAction("ConfirmPay", new { id });
+            }
+        }
+        // 辅助方法：更新支付状态（需实现）
+        private async Task<bool> UpdatePaymentStatusAsync(int paymentId, string status)
+        {
+            string sql = "UPDATE Payments SET [Status] = @Status WHERE PaymentID = @PaymentID";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@Status", status);
+                cmd.Parameters.AddWithValue("@PaymentID", paymentId);
+                await conn.OpenAsync();
+                int rows = await cmd.ExecuteNonQueryAsync();
+                return rows > 0;
+            }
+        }
     }
         #endregion
 }

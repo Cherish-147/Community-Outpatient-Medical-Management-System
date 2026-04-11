@@ -1252,7 +1252,7 @@ where  AppointmentID =@AppointmentID";
 
         }
 
-        public virtual void GetMedicalRecordByPatientId(int patientId, out List<MedicalRecord> medicalRecordList)//--方法，某种患者病历记录
+        public virtual void GetMedicalRecordByPatientId(int patientId, out List<MedicalRecord> medicalRecordList)//--方法，某个患者病历记录
         {
             medicalRecordList = new List<MedicalRecord>();
             string sql = @"
@@ -2412,5 +2412,67 @@ where  AppointmentID =@AppointmentID";
                 return false;
             }
         }
+        public async Task<IActionResult> GetMyMedicalRecord(int patientId) //控制器-获取患者病历
+        {
+           
+            var myMedicalRecord = new List<GetMyMedicalRecordModel>();
+            myMedicalRecord = await GetMyMedicalRecordInfo(patientId);
+            if (myMedicalRecord == null)
+            {
+                return NotFound();
+            }
+            return View(myMedicalRecord);
+        }
+        public virtual async Task<List<GetMyMedicalRecordModel>> GetMyMedicalRecordInfo(int patientId)
+        {
+            var myMedicalRecords = new List<GetMyMedicalRecordModel>();
+            string sql = @"
+                        SELECT m.[RecordID], m.[AppointmentID],p.Name as PatientName, m.[PatientStatement], m.[Diagnosis], 
+                        m.[Treatment], m.[Status], m.[CreatedAt], m.[UpdatedAt]
+                        FROM [MedicalRecords] m
+                        INNER JOIN [Appointments] a ON a.AppointmentID = m.AppointmentID
+                        INNER JOIN [Patients] p ON p.PatientID = a.PatientID
+                        WHERE p.PatientID = @PatientID
+                        order by m.[RecordID] desc
+                        ";
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PatientID", patientId);
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            var record = new GetMyMedicalRecordModel
+                            {
+                               RecordID = reader.GetInt32(reader.GetOrdinal("RecordID")),
+                               AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                               PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                               PatientStatement = reader.IsDBNull(reader.GetOrdinal("PatientStatement")) ? null : reader.GetString(reader.GetOrdinal("PatientStatement")),
+                               Diagnosis = reader.IsDBNull(reader.GetOrdinal("Diagnosis")) ? null : reader.GetString(reader.GetOrdinal("Diagnosis")),
+                               Treatment = reader.IsDBNull(reader.GetOrdinal("Treatment")) ? null : reader.GetString(reader.GetOrdinal("Treatment")),
+                               Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                               CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                               UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                            };
+                            myMedicalRecords.Add(record);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 可根据需要记录日志
+                // _logger.LogError(ex, "获取患者病历失败，PatientId: {PatientId}", patientId);
+                return null; // 或者重新抛出
+            }
+            return myMedicalRecords;
+
+        }
+
         }
 }

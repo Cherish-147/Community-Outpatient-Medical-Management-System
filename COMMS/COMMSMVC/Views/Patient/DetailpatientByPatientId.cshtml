@@ -1,6 +1,14 @@
 ﻿@model COMMSMVC.Models.DetailPatientModel
 @{
-    ViewData["Title"] = "患者详情";
+    @if (@Context.Session.GetString("Role") == "Patient")
+    {
+        ViewData["Title"] = "我的病历信息详细";
+    }
+    else
+    {
+        ViewData["Title"] = "患者详情";
+    }
+   
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -119,7 +127,11 @@
 
         <div>
             <a asp-action="EditpatientByPatientId" asp-route-id="@Model.PatientID" class="btn-edit">编辑</a>
-            <a asp-action="GetAllPatientsIndex" class="btn-back">返回列表</a>
+            @if (@Context.Session.GetString("Role") != "Patient")
+            {
+                <a asp-action="GetAllPatientsIndex" class="btn-back">返回列表</a>
+            }
+            
         </div>
     }
 </div>

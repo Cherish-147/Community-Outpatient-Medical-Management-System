@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Microsoft.Data.SqlClient;
 
 
 namespace COMMSMVC.Controllers
@@ -115,23 +116,54 @@ namespace COMMSMVC.Controllers
                 HttpContext.Session.SetString("Username",tokenInfo.UserName );
                 HttpContext.Session.SetString("Role",tokenInfo.Role );
                 HttpContext.Session.SetString("JwtToken", tokenInfo.JWTToken);
-
+                
+               
                 if (HttpContext.Session.GetString("Role") == "Admin" || HttpContext.Session.GetString("Role") == "Doctor")
                 {
                     return RedirectToAction("Index", "Home");
                 }
                 else if (HttpContext.Session.GetString("Role") == "Patient")
                 {
-                
+                    int patientId = await GetPatientIDByUserId(int.Parse(tokenInfo.UserID));
+
+                    HttpContext.Session.SetInt32("patientId", patientId);
                     //int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
 
-                        return RedirectToAction("Register", "Patient");
+                    return RedirectToAction("Register", "Patient");
                 }
             }
             ViewBag.Error = "用户名或密码错误";
             return View(model);
         }
       
+        public virtual async Task<int> GetPatientIDByUserId(int userId)
+        {
+            string sql = @"SELECT PatientID FROM Patients WHERE UserId = @UserId";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    await conn.OpenAsync();
+                    object result = await cmd.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return Convert.ToInt32(result);
+                    }
+                    else
+                    {
+                        return -1; // 未找到对应患者，返回-1
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录日志（建议使用 ILogger）
+                // _logger.LogError(ex, "根据UserId获取PatientID失败，UserId: {UserId}", userId);
+                return 0; // 或重新抛出异常，根据业务需求决定
+            }
+        }
         public IActionResult Logout()
         {
             // 1. 清空所有用户相关的Session数据（关键）

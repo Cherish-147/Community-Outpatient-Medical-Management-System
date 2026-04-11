@@ -322,6 +322,7 @@ not in (select p.UserId from Patients p) and role='Patient'
         [HttpGet]
         public async Task<IActionResult> DetailpatientByPatientId(int patientId)
         {
+            ViewBag.PatientId1 = HttpContext.Session.GetInt32("patientId");
 
             var result = await  DetailpatientByPatientIdInfo(patientId);
             if (!result.IsSuccess)
@@ -771,7 +772,7 @@ SELECT  [PatientID]
         }
 
         // 缴费记录
-        public IActionResult MyPayments()
+        public async Task<IActionResult> MyPayments()
         {
             // 登录验证
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserID")) ||
@@ -779,9 +780,111 @@ SELECT  [PatientID]
             {
                 return RedirectToAction("Login", "Home");
             }
+            
             ViewData["Title"] = "缴费记录 - 社区门诊患者中心";
-            return View();
+            // 获取当前登录患者的 PatientID（假设 Session 中存有 PatientID 或通过 UserID 查询）
+            int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
+            // 根据 UserId 获取 PatientID（可能需要额外方法，假设你有 GetPatientByUserId 方法）
+            int patientId = await GetPatientIdByUserIdAsync(userId); // 自行实现
+            if (patientId == 0)
+            {
+                // 如果没有患者信息，跳转到注册页面
+                TempData["Error"] = "请先完善患者信息。";
+                return RedirectToAction("Register", "Patient");
+            }
+
+            var payments = await GetMyPayment(patientId);
+            return View(payments);
+           
         }
+        public virtual async Task<List<GetMyPaymentModel>> GetMyPayment(int patientID)//获取当前患者的缴费记录方法
+        {
+            var paymentList = new List<GetMyPaymentModel>();
+            string sql = @"
+                         SELECT pay.PaymentID, pay.AppointmentID,
+                                p.PatientID, p.Name AS PatientName,
+                                pay.Amount, pay.Method, pay.Status, pay.PaidAt
+                         FROM Payments pay
+                         INNER JOIN Appointments a ON pay.AppointmentID = a.AppointmentID
+                         INNER JOIN Patients p ON a.PatientID = p.PatientID
+                         WHERE p.PatientID = @PatientID
+                         ORDER BY pay.PaymentID DESC
+                        ";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@PatientID", patientID);
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var model = new GetMyPaymentModel
+                        {
+                            PaymentID = reader.GetInt32(reader.GetOrdinal("PaymentID")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                            PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                            Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                            Method = reader.IsDBNull(reader.GetOrdinal("Method")) ? null : reader.GetString(reader.GetOrdinal("Method")),
+                            Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                            PaidAt = reader.GetDateTime(reader.GetOrdinal("PaidAt"))
+                        };
+                        paymentList.Add(model);
+                    }
+                }
+            }
+            return paymentList;
+        }
+        public async Task<int> GetPatientIdByUserIdAsync(int userId)
+        {
+            string sql = "SELECT PatientID FROM Patients WHERE UserId = @UserId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                await conn.OpenAsync();
+                object result = await cmd.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+        }
+
+        // 根据 PaymentID 获取支付记录（可复用已有方法）
+        private async Task<GetMyPaymentModel> GetPaymentByIdAsync(int paymentId)
+        {
+            string sql = @"SELECT pay.PaymentID, pay.AppointmentID, p.PatientID, p.Name AS PatientName,
+                          pay.Amount, pay.Method, pay.Status, pay.PaidAt
+                   FROM Payments pay
+                   INNER JOIN Appointments a ON pay.AppointmentID = a.AppointmentID
+                   INNER JOIN Patients p ON a.PatientID = p.PatientID
+                   WHERE pay.PaymentID = @PaymentID";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@PaymentID", paymentId);
+                await conn.OpenAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new GetMyPaymentModel
+                        {
+                            PaymentID = reader.GetInt32(reader.GetOrdinal("PaymentID")),
+                            AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                            PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                            PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                            Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                            Method = reader.IsDBNull(reader.GetOrdinal("Method")) ? null : reader.GetString(reader.GetOrdinal("Method")),
+                            Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                            PaidAt = reader.GetDateTime(reader.GetOrdinal("PaidAt"))
+                        };
+                    }
+                }
+            }
+            return null;
+        }
+
+
         //患者信息首页
         [HttpGet]
         public IActionResult GetPatientInfo()

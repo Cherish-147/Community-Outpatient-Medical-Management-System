@@ -95,20 +95,20 @@
                         <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Patient" && ViewContext.RouteData.Values["Action"].ToString() != "PatientIndex" ? "show" : "")" id="patientFunctionMenu">
                             <ul class="list-unstyled ps-3">
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "RegisterAppointment" ? "active fw-bold" : "")"
-                                           asp-controller="Patient" asp-action="RegisterAppointment">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Appointment" ? "active fw-bold" : "")"
+                                           asp-controller="Appointment" asp-action="Index">
                                         <i class="bi bi-calendar-plus me-2"></i> 预约挂号
                                     </a>
                                 </li>
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "MyRecords" ? "active fw-bold" : "")"
-                                           asp-controller="Patient" asp-action="MyRecords">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "GetMyMedicalRecord" ? "active fw-bold" : "")"
+                                           asp-controller="Visit" asp-action="GetMyMedicalRecord" asp-route-patientId="@Context.Session.GetInt32("patientId")">
                                         <i class="bi bi-journal-text me-2"></i> 我的病历
                                     </a>
                                 </li>
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "MyPrescriptions" ? "active fw-bold" : "")"
-                                           asp-controller="Patient" asp-action="MyPrescriptions">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "GetMyPrescriptions" ? "active fw-bold" : "")"
+                                           asp-controller="Prescriptions" asp-action="GetMyPrescriptions">
                                         <i class="bi bi-prescription me-2"></i> 我的处方
                                     </a>
                                 </li>
@@ -119,8 +119,8 @@
                                     </a>
                                 </li>
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "active fw-bold" : "")"
-                                           asp-controller="Patient" asp-action="EditProfile">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "DetailpatientByPatientId" ? "active fw-bold" : "")"
+                                           asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")">
                                         <i class="bi bi-pencil me-2"></i> 个人信息
                                     </a>
                                 </li>

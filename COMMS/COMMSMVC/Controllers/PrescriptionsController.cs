@@ -779,6 +779,88 @@ namespace COMMSMVC.Controllers
             }
         }
 
+        public async Task<IActionResult> GetMyPrescriptions(int?patientId)
+        {
+            // 从 Session 获取当前患者的 PatientId（假设登录时已存储）
+             patientId = HttpContext.Session.GetInt32("patientId");
+            if (!patientId.HasValue)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            var model = await GetMyPrescriptionsInfo(patientId.Value);
+            return View(model);
+            
+        }
+
+        private async Task<List<GetMyPrescriptionsModel>> GetMyPrescriptionsInfo(int patientId)
+        {
+            var prescriptionsList = new List<GetMyPrescriptionsModel>();
+            string sql = @"
+                            SELECT
+                                 -- 患者信息
+                                 p.PatientID,
+                                 p.Name       AS PatientName,
+                                 a.AppointmentID,
+                                 pr.PrescriptionID,
+                                 -- 药品信息
+                              pd.DetailID,
+                                 m.MedicationID,
+                                 m.Name       AS MedicationName,
+                                 pd.Quantity  AS Quantity,
+                                 m.Stock      AS Stock,
+                                 pd.Remarks   AS Remarks
+                             FROM Prescriptions pr
+                             INNER JOIN Appointments a      ON pr.AppointmentID = a.AppointmentID
+                             INNER JOIN Patients p          ON a.PatientID       = p.PatientID
+                             INNER JOIN PrescriptionDetails pd ON pr.PrescriptionID = pd.PrescriptionID
+                             INNER JOIN Medications m       ON pd.MedicationID   = m.MedicationID
+                             WHERE
+                             p.PatientID=20     
+                            ORDER BY pd.DetailID desc
+                        ";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PatientID", patientId);
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var model = new GetMyPrescriptionsModel
+                            {
+                                IsSuccess = true,
+                                Message = null,
+                                PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                PatientName = reader.GetString(reader.GetOrdinal("PatientName")),
+                                AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                                PrescriptionID = reader.GetInt32(reader.GetOrdinal("PrescriptionID")),
+                                DetailID = reader.GetInt32(reader.GetOrdinal("DetailID")),
+                                MedicationID = reader.GetInt32(reader.GetOrdinal("MedicationID")),
+                                MedicationName = reader.GetString(reader.GetOrdinal("MedicationName")),
+                                Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                                Stock = reader.GetInt32(reader.GetOrdinal("Stock")),
+                                Remarks = reader.IsDBNull(reader.GetOrdinal("Remarks")) ? null : reader.GetString(reader.GetOrdinal("Remarks"))
+                            };
+                            prescriptionsList.Add(model);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                prescriptionsList.Add(new GetMyPrescriptionsModel
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                });
+            }
+            return prescriptionsList;
+        }
+
     }
 
 

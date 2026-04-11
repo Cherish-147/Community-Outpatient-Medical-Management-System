@@ -120,7 +120,7 @@
                 <div class="avatar">
                     <i class="bi bi-person"></i>
                 </div>
-                <h5 class="mb-1">@Context.Session.GetString("Username")</h5>
+                <h5 class="mb-1">患者姓名: @Context.Session.GetString("Username")</h5>
                 <p class="text-muted mb-2">患者ID：@Context.Session.GetString("UserID")</p>
 
                 <div class="mb-2">
@@ -137,7 +137,7 @@
                 </div>
 
                 <!-- 链接指向患者布局中的个人信息管理 -->
-                <a href="/Patient/EditProfile" class="btn btn-primary btn-sm w-100 mt-3">
+                <a asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")" class="btn btn-primary btn-sm w-100 mt-3">
                     <i class="bi bi-pencil"></i> 编辑个人信息
                 </a>
             </div>
@@ -161,14 +161,14 @@
                 <h4 class="mb-3"><i class="bi bi-speedometer2 text-primary"></i> 快捷服务</h4>
 
                 <div class="col-md-4 col-sm-6 mb-3">
-                    <a href="/Patient/RegisterAppointment" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
+                    <a href="/Appointment" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
                         <i class="bi bi-calendar-plus fs-3 mb-2"></i>
                         <span>预约挂号</span>
                     </a>
                 </div>
 
                 <div class="col-md-4 col-sm-6 mb-3">
-                    <a href="/Patient/EditProfile" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
+                    <a asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
                         <i class="bi bi-person-pin fs-3 mb-2"></i>
                         <span>个人信息管理</span>
                     </a>
@@ -255,7 +255,7 @@
                                 </div>
                                 <h5 class="card-title">李医生</h5>
                                 <p class="card-text text-muted small">内科 | 主治医师</p>
-                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                                <a href="/Appointment" class="btn btn-sm btn-primary">预约就诊</a>
                             </div>
                         </div>
                     </div>
