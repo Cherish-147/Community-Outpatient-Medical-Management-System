@@ -268,7 +268,7 @@
                                href="#" role="button" data-bs-toggle="collapse"
                                data-bs-target="#medicineMenu"
                                aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "Medication" ? "true" : "false")">
-                            <i class="bi bi-pills me-2"></i> 药品管理
+                            <i class="bi bi-capsule me-2"></i> 药品管理
                         </a>
                         <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "Medication" ? "show" : "")" id="medicineMenu">
                             <ul class="list-unstyled ps-3">
@@ -330,6 +330,13 @@
                                         <i class="bi bi-calendar-list me-2"></i> 查看挂号
                                     </a>
                                 </li>
+
+                                <li class="mb-1">
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "CallNumber" ? "active fw-bold" : "")"
+                                           asp-controller="Visit" asp-action="CallNumber">
+                                        <i class="bi bi-calendar-list me-2"></i> 医生叫号
+                                    </a>
+                                </li>
                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "GetPatientById" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="GetPatientById">
@@ -354,42 +361,42 @@
                                         <i class="bi bi-file-medical-fill me-2"></i> 诊断、开检查单
                                     </a>
                                 </li>
-                                <li class="mb-1">
+@*                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "CreatePrescription" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="CreatePrescription">
                                         <i class="bi bi-prescription-fill me-2"></i> 诊断、开处方单
                                     </a>
-                                </li>
+                                </li> *@
                                 <li class="mb-1">
-                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
-                                           asp-controller="Visit" asp-action="Index">
-                                        <i class="bi bi-list-check me-2"></i> 就诊记录
+                                    <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "GetAllMedicalRecord" ? "active fw-bold" : "")"
+                                           asp-controller="Visit" asp-action="GetAllMedicalRecord">
+                                        <i class="bi bi-list-check me-2"></i> 就诊记录列表
                                     </a>
                                 </li>
-                                <li class="mb-1">
+    @*                             <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="Create">
                                         <i class="bi bi-plus-circle me-2"></i> 新增就诊
                                     </a>
-                                </li>
-                                <li class="mb-1">
+                                </li> *@
+ @*                                <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Edit" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="Edit">
                                         <i class="bi bi-pencil-square me-2"></i> 编辑就诊
                                     </a>
-                                </li>
-                                <li class="mb-1">
+                                </li> *@
+@*                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Details" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="Details">
                                         <i class="bi bi-eye me-2"></i> 就诊详情
                                     </a>
-                                </li>
-                                <li class="mb-1">
+                                </li> *@
+     @*                            <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Delete" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="Delete">
                                         <i class="bi bi-trash me-2"></i> 删除就诊
                                     </a>
-                                </li>
+                                </li> *@
                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "CheckOrdersIndex" ? "active fw-bold" : "")"
                                            asp-controller="Visit" asp-action="CheckOrdersIndex">
@@ -452,38 +459,38 @@
                                         <i class="bi bi-plus-circle me-2"></i> 新增收费
                                     </a>
                                 </li>
-                                <li class="mb-1">
+        @*                         <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Refund" ? "active fw-bold" : "")"
                                            asp-controller="Payment" asp-action="Refund">
                                         <i class="bi bi-arrow-return-left me-2"></i> 退费处理
                                     </a>
-                                </li>
+                                </li> *@
                             </ul>
                         </div>
                     </li>
 
                     <!-- 系统管理（重构：统一样式+Action高亮） -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "active" : "")"
+                        <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["Controller"].ToString() == "User" ? "active" : "")"
                                href="#" role="button" data-bs-toggle="collapse"
                                data-bs-target="#systemMenu"
-                               aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "true" : "false")">
+                               aria-expanded="@(ViewContext.RouteData.Values["Controller"].ToString() == "User" ? "true" : "false")">
                             <i class="bi bi-gear me-2"></i> 系统管理
                         </a>
-                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "System" ? "show" : "")" id="systemMenu">
+                        <div class="collapse @(ViewContext.RouteData.Values["Controller"].ToString() == "User" ? "show" : "")" id="systemMenu">
                             <ul class="list-unstyled ps-3">
                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active fw-bold" : "")"
                                        asp-controller="User" asp-action="Index">
-                                        <i class="bi bi-people me-2"></i> 用户管理
+                                        <i class="bi bi-people me-2"></i> 用户权限管理
                                     </a>
                                 </li>
-                                <li class="mb-1">
+                  @*               <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "RoleManagement" ? "active fw-bold" : "")"
                                            asp-controller="System" asp-action="RoleManagement">
                                         <i class="bi bi-shield-check me-2"></i> 角色权限
                                     </a>
-                                </li>
+                                </li> *@
                                 <li class="mb-1">
                                     <a class="nav-link py-1 @(ViewContext.RouteData.Values["Action"].ToString() == "Parameter" ? "active fw-bold" : "")"
                                            asp-controller="System" asp-action="Parameter">

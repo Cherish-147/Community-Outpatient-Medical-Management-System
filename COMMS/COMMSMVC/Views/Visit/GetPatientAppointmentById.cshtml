@@ -1,6 +1,6 @@
 ﻿@model List<COMMSMVC.Models.AppointmentViewModel>
 @{
-    ViewData["Title"] = "今日某患者预约列表";
+    ViewData["Title"] = "某患者预约列表";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <style>
@@ -82,7 +82,7 @@
 </style>
 
 <div class="form-container">
-    <h2 class="form-title">今日某患者预约列表</h2>
+    <h2 class="form-title">某患者预约列表</h2>
 
     @if (Model == null || Model.Count == 0)
     {

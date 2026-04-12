@@ -817,7 +817,7 @@ namespace COMMSMVC.Controllers
                              INNER JOIN PrescriptionDetails pd ON pr.PrescriptionID = pd.PrescriptionID
                              INNER JOIN Medications m       ON pd.MedicationID   = m.MedicationID
                              WHERE
-                             p.PatientID=20     
+                             p.PatientID=@patientId     
                             ORDER BY pd.DetailID desc
                         ";
             try

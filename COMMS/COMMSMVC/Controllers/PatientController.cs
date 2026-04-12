@@ -40,7 +40,9 @@ namespace COMMSMVC.Controllers
                                          ,[GuardianAddress]
                                          ,[GuardianPhone]
                                          ,[Remark]
-                                     FROM [Patients]";
+                                     FROM [Patients]
+                                     Order by [PatientID] desc
+                                        ";
             try
             {
 
