@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 using System.Text;
 using System.Transactions;
+using WebDriverBiDi.Protocol;
 
 namespace COMMSMVC.Controllers
 {
@@ -219,7 +220,10 @@ namespace COMMSMVC.Controllers
                     // 2. 插入处方明细
                     await InsertPrescriptionDetailAsync(prescriptionId, model);
                     //3.更新药品库存？
-                    //写在药品控制器里
+                    //写在药品控制器里了
+                    //4.创建患者付款单
+                   await AutoCreatePayment(model.AppointmentID);
+
                     transaction.Complete();
 
                     TempData["SuccessMessage"] = $"处方创建成功！处方编号：{prescriptionId}";
@@ -228,11 +232,68 @@ namespace COMMSMVC.Controllers
                 catch (Exception ex)
                 {
                     ModelState.AddModelError("", $"创建失败：{ex.Message}");
+                    TempData["ErrorMessage"] = $"处方创建失败！：{ex.Message}";
                     model.Appointments = await GetAppointmentSelectListAsync();
                     model.Medications = await GetMedicationSelectListAsync();
                     return View(model);
                 }
             }
+        }
+        public async Task<string> AutoCreatePayment(int appointmentId)
+        {
+            string msg = "";
+            string sql = @"
+                        INSERT INTO Payments (AppointmentID, Amount, Method, Status, PaidAt)
+                        SELECT 
+                            a.AppointmentID,
+                            -- 自动把所有药品金额求和
+                            SUM(m.Price * pd.Quantity) AS Amount,
+                            '待选择' AS Method,       -- 你要的支付方式
+                            '待支付' AS Status,       -- 合理默认状态
+                            --NULL AS PaidAt            -- 未支付所以时间为空
+                            GetDate() AS PaidAt
+                        FROM PrescriptionDetails pd
+                        INNER JOIN Prescriptions pr ON pd.PrescriptionID = pr.PrescriptionID
+                        INNER JOIN Appointments a ON pr.AppointmentID = a.AppointmentID
+                        INNER JOIN Patients p ON a.PatientID = p.PatientID
+                        LEFT JOIN Medications m ON pd.MedicationID = m.MedicationID
+                        WHERE 
+                            a.AppointmentID = @AppointmentID
+                            AND Remarks NOT IN ('已付款','已完成发药')
+                        -- 分组求和（必须加）
+                        GROUP BY a.AppointmentID
+                        HAVING SUM(ISNULL(m.Price, 0) * ISNULL(pd.Quantity, 0)) > 0
+                        ";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    if (rowsAffected > 0)
+                    {
+                        msg = $"成功创建支付记录，预约ID：{appointmentId}";
+                    }
+                    else
+                    {
+                        //msg = $"未找到需要支付的药品或金额为0，预约ID：{appointmentId}";
+                        // 没有插入任何记录，视为业务错误
+                        throw new InvalidOperationException($"未找到需要支付的药品或金额为0，预约ID：{appointmentId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 建议使用 ILogger 记录详细错误
+                // _logger.LogError(ex, "自动创建支付失败，AppointmentID: {AppointmentID}", appointmentId);
+                //msg = $"创建支付记录失败：{ex.Message}";
+                //throw new InvalidOperationException(msg);
+                string errorMsg = $"创建支付记录失败：{ex.Message}";
+                throw new InvalidOperationException(errorMsg, ex);
+            }
+            return msg;
         }
         // 辅助方法：获取可开处方的预约列表
         private async Task<List<SelectListItem>> GetAppointmentSelectListAsync()
