@@ -169,7 +169,10 @@
 
                 <div class="col-md-4 col-sm-6 mb-3">
                     <a asp-controller="Patient" asp-action="DetailpatientByPatientId" asp-route-patientId="@Context.Session.GetInt32("patientId")" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center action-btn">
-                        <i class="bi bi-person-pin fs-3 mb-2"></i>
+                        <i class="bi bi-person-circle fs-3 mb-2"></i>
+@*                         <i class="bi bi-person-vcard fs-3 mb-2"></i>
+                        <i class="bi bi-person-vcard fs-3 mb-2"></i> *@
+
                         <span>个人信息管理</span>
                     </a>
                 </div>
@@ -268,7 +271,7 @@
                                 </div>
                                 <h5 class="card-title">王医生</h5>
                                 <p class="card-text text-muted small">全科 | 副主任医师</p>
-                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                                <a href="/Appointment" class="btn btn-sm btn-primary">预约就诊</a>
                             </div>
                         </div>
                     </div>
@@ -281,7 +284,7 @@
                                 </div>
                                 <h5 class="card-title">张医生</h5>
                                 <p class="card-text text-muted small">心内科 | 主任医师</p>
-                                <a href="/Patient/RegisterAppointment" class="btn btn-sm btn-primary">预约就诊</a>
+                                <a href="/Appointment" class="btn btn-sm btn-primary">预约就诊</a>
                             </div>
                         </div>
                     </div>

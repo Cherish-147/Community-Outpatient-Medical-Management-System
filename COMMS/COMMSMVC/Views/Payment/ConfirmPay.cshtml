@@ -1,4 +1,4 @@
-﻿@model COMMSMVC.Models.GetMyPaymentModel
+﻿@model COMMSMVC.Models.PaymentsIndex
 @{
     ViewData["Title"] = "确认支付";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -125,7 +125,7 @@
         </div>
 
         <button type="submit" class="btn-submit">确认支付</button>
-        <a asp-action="MyPayments" class="btn-back">← 返回缴费记录</a>
+        <a asp-controller="Patient" asp-action="MyPayments" class="btn-back">← 返回缴费记录</a>
     </form>
 </div>
 

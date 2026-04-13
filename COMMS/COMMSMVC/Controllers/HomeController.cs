@@ -73,9 +73,44 @@ namespace COMMSMVC.Controllers
 
         }
         [HttpPost]
-        public IActionResult Register(Users user)
+        public async Task<IActionResult> Register(RegisterModel model)
         {
-           return View();
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // 构造 API 所需 JSON
+            var requestBody = new
+            {
+                userName = model.UserName,
+                password = model.Password,
+                passwordAgain = model.PasswordAgain,
+                email = model.Email,
+                phoneNumber = model.PhoneNumber ?? "",
+                gender = model.Gender ?? ""
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using HttpClient httpclient = new();
+
+
+            var response = await httpclient.PostAsync($"{baseUrl}/Home/Register", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 假设 API 返回成功消息（可解析返回内容）
+                TempData["SuccessMessage"] = "注册成功！请登录。";
+                return RedirectToAction("Login", "Home");
+            }
+            else
+            {
+                var errorMsg = await response.Content.ReadAsStringAsync();
+                // 简单处理错误，可根据实际返回格式细化
+                TempData["ErrorMessage"] = $"注册失败：{errorMsg}";
+                return View(model);
+            }
         }
 
         //IIS 不支持双斜杠 //
@@ -125,11 +160,14 @@ namespace COMMSMVC.Controllers
                 else if (HttpContext.Session.GetString("Role") == "Patient")
                 {
                     int patientId = await GetPatientIDByUserId(int.Parse(tokenInfo.UserID));
-
+                    if(patientId <=0)
+                    {
+                        return RedirectToAction("Register", "Patient");
+                    }
                     HttpContext.Session.SetInt32("patientId", patientId);
-                    //int userId = Convert.ToInt32(HttpContext.Session.GetString("UserID"));
-
-                    return RedirectToAction("Register", "Patient");
+                    
+                    return RedirectToAction("PatientIndex", "Patient");
+                    
                 }
             }
             ViewBag.Error = "用户名或密码错误";

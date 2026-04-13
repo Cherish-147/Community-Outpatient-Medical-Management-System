@@ -512,55 +512,57 @@ namespace COMMSMVC.Controllers
             if (payment == null || payment.Status != "待支付")
             {
                 TempData["ErrorMessage"] = "该支付记录不存在或已支付！";
-                return RedirectToAction("MyPayments");
+                //return RedirectToAction("MyPayments");
             }
-
-            // 模拟支付成功，更新状态为“已支付”
-            bool success = await UpdatePaymentStatusAsync(id, "已支付");
-            if (success)
-            {
-                TempData["SuccessMessage"] = "支付成功！";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "支付失败，请稍后重试。";
-            }
-            return RedirectToAction(nameof(PatientController.MyPayments), "Patient");
+            return View(payment);
+            //// 模拟支付成功，更新状态为“已支付”
+            //bool success = await UpdatePaymentStatusAsync(id, "已支付");
+            //if (success)
+            //{
+            //    TempData["SuccessMessage"] = "支付成功！";
+            //}
+            //else
+            //{
+            //    TempData["ErrorMessage"] = "支付失败，请稍后重试。";
+            //}
+            //return RedirectToAction(nameof(PatientController.MyPayments), "Patient");
         }
 
         // POST: 执行支付
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmPay(int id, string paymentMethod)
+        public async Task<IActionResult> ConfirmPay(int paymentID,string paymentMethod)
         {
-            var payment = await GetPaymentByIdAsync(id);
+            var payment = await GetPaymentByIdAsync(paymentID);
             if (payment == null || payment.Status != "待支付")
             {
                 TempData["ErrorMessage"] = "支付记录无效或已支付。";
-                return RedirectToAction("MyPayments");
-            }
-
+                return RedirectToAction("MyPayments", "Patient");
+            
+        }
+            string payStatus = "已支付";
             // 更新支付状态、支付方式、支付时间
-            bool success = await UpdatePaymentStatusAsync(id, paymentMethod);
+            bool success = await UpdatePaymentStatusAsync(paymentID, payStatus, paymentMethod);
             if (success)
             {
                 TempData["SuccessMessage"] = "支付成功！";
-                return RedirectToAction("MyPayments");
+                return RedirectToAction( "MyPayments","Patient");
             }
             else
             {
                 TempData["ErrorMessage"] = "支付失败，请稍后重试。";
-                return RedirectToAction("ConfirmPay", new { id });
+                return RedirectToAction("ConfirmPay", new { paymentID });
             }
         }
         // 辅助方法：更新支付状态（需实现）
-        private async Task<bool> UpdatePaymentStatusAsync(int paymentId, string status)
+        private async Task<bool> UpdatePaymentStatusAsync(int paymentId, string status,string payMethod)
         {
-            string sql = "UPDATE Payments SET [Status] = @Status WHERE PaymentID = @PaymentID";
+            string sql = "UPDATE Payments SET [Status] = @Status,Method=@Method WHERE PaymentID = @PaymentID";
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@Status", status);
+                cmd.Parameters.AddWithValue("@Method", payMethod);
                 cmd.Parameters.AddWithValue("@PaymentID", paymentId);
                 await conn.OpenAsync();
                 int rows = await cmd.ExecuteNonQueryAsync();
