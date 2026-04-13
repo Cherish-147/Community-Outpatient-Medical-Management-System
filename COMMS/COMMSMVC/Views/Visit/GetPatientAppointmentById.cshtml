@@ -139,7 +139,7 @@
                             <a asp-action="CreateMedicalRecord" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">录入病历</a>
                         </td>
                         <td>
-                            <a asp-action="开检查单" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">开检查单</a>
+                            <a asp-action="CreateCheckOrder" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">开检查单</a>
                         </td>
                         <td>
                             <a asp-action="Create" asp-controller="Prescriptions" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">                                开处方                            </a>

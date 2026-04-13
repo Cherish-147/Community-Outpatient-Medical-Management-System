@@ -1774,6 +1774,37 @@ where  AppointmentID =@AppointmentID";
         }
         #endregion
 
+        public virtual async Task<string> CreateCheckOrder(CreateCheckOrderModel model)
+        {
+            string insertSql = @" insert into CheckOrders ([AppointmentID]
+          ,[CheckItemID]
+          ,[Status]
+          ,[Result]) 
+		  VALUES (@AppointmentID, @CheckItemID, @Status, @Result )";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(insertSql, conn))
+            {
+                cmd.Parameters.AddWithValue("@AppointmentID", model.AppointmentID);
+                cmd.Parameters.AddWithValue("@CheckItemID", model.CheckItemID);
+                cmd.Parameters.AddWithValue("@Status", model.Status ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Result", model.Result ?? (object)DBNull.Value);
+
+                try
+                {
+                    await conn.OpenAsync();
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    if (rowsAffected > 0)
+                        return "检查单创建成功";
+                    else
+                        return "检查单创建失败，未影响任何行";
+                }
+                catch (Exception ex)
+                {
+                    // 可记录日志（如 _logger.LogError(ex, ...)）
+                    return $"创建失败：{ex.Message}";
+                }
+            }
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CheckOrder checkOrder)//控制器-创建检查单提交
@@ -1781,15 +1812,28 @@ where  AppointmentID =@AppointmentID";
           
             if (ModelState.IsValid)
             {
-                // 模拟保存操作（实际应存入数据库）
-                checkOrder.CreatedAt = DateTime.Now;
-                checkOrder.Status = "已开单"; // 默认状态
+                var checkOrderModel = new CreateCheckOrderModel
+                {
+                    AppointmentID = checkOrder.AppointmentID,
+                    CheckItemID = checkOrder.CheckItemID,
+                    Result = checkOrder.Result,
+                    Status = "已开单" 
+                };
+                
 
-                // 这里可以模拟保存到列表，例如：
-                // _checkOrders.Add(checkOrder); （需定义静态列表）
+                string result = await CreateCheckOrder(checkOrderModel);
+                if (result.Contains("成功"))
+                {
+                    TempData["SuccessMessage"] = result;
+                    return RedirectToAction(nameof(CheckOrdersIndex));
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = result;
+                    // 失败后重新加载下拉列表并返回视图
+                    //return RedirectToAction("CreateCheckOrder");
+                }
 
-                TempData["SuccessMessage"] = "检查单创建成功！";
-                return RedirectToAction(nameof(Index)); // 假设存在 Index 动作
             }
 
             _checkItems = new List<CheckItem>();
@@ -1808,7 +1852,7 @@ where  AppointmentID =@AppointmentID";
             var appointments = _appointmentIds.Select(id => new { AppointmentID = id, DisplayText = $"预约 #{id}" }).ToList();
             ViewBag.AppointmentID = new SelectList(appointments, "AppointmentID", "DisplayText", checkOrder.AppointmentID);
 
-            return View(checkOrder);
+            return RedirectToAction("CreateCheckOrder");
             
         }
 
@@ -2038,11 +2082,14 @@ where  AppointmentID =@AppointmentID";
             var checkItems = await GetCheckItemNameList();
             if (checkItems == null) checkItems = new List<CheckItemNames>();
             ViewBag.CheckItems = new SelectList(checkItems, "CheckItemID", "CheckItemName");
-            var checkOrders = new CheckOrder
+            CheckOrder checkOrders = new CheckOrder();
+
+            if (appointmentId > 0)
             {
-                AppointmentID = appointmentId,
-                Status = "已开单"  // 默认状态
-            };
+                // 再赋值
+                checkOrders.AppointmentID = appointmentId;
+                checkOrders.Status = "已开单";
+            }
 
             return View(checkOrders);
         }

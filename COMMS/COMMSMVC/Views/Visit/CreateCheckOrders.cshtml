@@ -93,9 +93,13 @@
         <input type="hidden" asp-for="AppointmentID" />
 
         @* 显示预约ID（可选，可只读展示） *@
+       
         <div class="form-group">
             <label class="form-label">预约ID</label>
-            <input type="text" class="form-control" value="@Model.AppointmentID" readonly />
+            <input type="text"
+                   class="form-control"
+                   value="@Model.AppointmentID"
+            @(Model.AppointmentID > 0 ? "readonly" : "") />
         </div>
 
         <div class="form-group">
