@@ -1,8 +1,275 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "社区门诊医务管理系统 - 首页";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- 首页核心样式（可按需移入site.css） -->
+<style>
+    /* 数据卡片样式 */
+    .stat-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0d6efd;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-label {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+
+    /* 快捷操作按钮 */
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #333;
+        text-decoration: none;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+        .quick-action-btn:hover {
+            background-color: #0d6efd;
+            color: white;
+            text-decoration: none;
+        }
+
+        .quick-action-btn i {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+    /* 公告栏样式 */
+    .notice-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .notice-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .notice-item:last-child {
+            border-bottom: none;
+        }
+
+    .notice-time {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+
+<!-- 首页内容 -->
+<div class="container-fluid py-4">
+    <!-- 欢迎信息 -->
+    <div class="mb-4">
+        <h2 class="fw-bold">
+            <i class="bi bi-house-heart text-primary"></i> 欢迎使用社区门诊医务管理系统
+        </h2>
+        <p class="text-muted">
+            @if (!string.IsNullOrEmpty(Context.Session.GetString("Username")))
+            {
+                <span>当前登录用户：@Context.Session.GetString("Username")</span>
+                <span class="ms-3">今日日期：@DateTime.Now.ToString("yyyy年MM月dd日")</span>
+            }
+        </p>
+    </div>
+
+    <!-- 数据概览模块 -->
+    <div class="row mb-4">
+        <h4 class="mb-3"><i class="bi bi-graph-up text-primary"></i> 门诊数据概览</h4>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">86</div>
+                <div class="stat-label">今日挂号数</div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">12</div>
+                <div class="stat-label">今日就诊数</div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">328</div>
+                <div class="stat-label">本月收费总额(元)</div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">15</div>
+                <div class="stat-label">在岗医生数</div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">526</div>
+                <div class="stat-label">在册患者数</div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="stat-number">189</div>
+                <div class="stat-label">药品库存数</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快捷操作模块 -->
+    <div class="row mb-4">
+        <h4 class="mb-3"><i class="bi bi-speedometer2 text-primary"></i> 快捷操作</h4>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Registration/Create" class="quick-action-btn">
+                <i class="bi bi-journal-medical"></i>
+                <span>新增挂号</span>
+            </a>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Patient/Create" class="quick-action-btn">
+                <i class="bi bi-person-plus"></i>
+                <span>新增患者</span>
+            </a>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Payment/Create" class="quick-action-btn">
+                <i class="bi bi-cash-coin"></i>
+                <span>新增收费</span>
+            </a>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Medication/Index" class="quick-action-btn">
+                <i class="bi bi-pills"></i>
+                <span>药品库存</span>
+            </a>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Doctor/Schedule" class="quick-action-btn">
+                <i class="bi bi-calendar-week"></i>
+                <span>出诊安排</span>
+            </a>
+        </div>
+
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/Statistics/Index" class="quick-action-btn">
+                <i class="bi bi-bar-chart"></i>
+                <span>数据统计</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 公告和待办模块 -->
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-bell"></i> 系统公告</h5>
+                </div>
+                <div class="card-body">
+                    <div class="notice-list">
+                        <div class="notice-item">
+                            <h6 class="mb-1">关于开展2025年度医疗设备检查的通知</h6>
+                            <p class="mb-1 text-muted small">为保障门诊医疗设备正常运行，现定于2025年4月10日-15日开展设备全面检查，请各科室配合。</p>
+                            <div class="notice-time">发布时间：2025-03-28</div>
+                        </div>
+                        <div class="notice-item">
+                            <h6 class="mb-1">五一假期门诊安排通知</h6>
+                            <p class="mb-1 text-muted small">五一假期（5月1日-5月5日）门诊开放时间调整为8:00-16:00，急诊24小时开放。</p>
+                            <div class="notice-time">发布时间：2025-03-20</div>
+                        </div>
+                        <div class="notice-item">
+                            <h6 class="mb-1">新版电子病历系统上线通知</h6>
+                            <p class="mb-1 text-muted small">新版电子病历系统将于2025年4月1日正式上线，请各位医生提前熟悉操作流程。</p>
+                            <div class="notice-time">发布时间：2025-03-15</div>
+                        </div>
+                        <div class="notice-item">
+                            <h6 class="mb-1">药品采购公告</h6>
+                            <p class="mb-1 text-muted small">本月新增采购感冒类药品20种，抗生素类药品15种，已入库可正常开具处方。</p>
+                            <div class="notice-time">发布时间：2025-03-10</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="text-primary">查看更多公告</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> 今日待办</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            整理昨日收费单据
+                            <span class="badge bg-warning rounded-pill">未完成</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            检查药品效期（近30天）
+                            <span class="badge bg-warning rounded-pill">未完成</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            更新医生出诊表
+                            <span class="badge bg-success rounded-pill">已完成</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            随访高血压患者（5人）
+                            <span class="badge bg-warning rounded-pill">未完成</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            系统数据备份
+                            <span class="badge bg-success rounded-pill">已完成</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="text-warning">查看全部待办</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- 首页专属脚本（可选） -->
+@section Scripts {
+    <script>
+        // 可以添加数据刷新、图表渲染等脚本
+        $(document).ready(function() {
+            // 示例：定时刷新数据概览（实际项目中需对接接口）
+            // setInterval(function() {
+            //     // 调用接口更新数据
+            // }, 300000); // 5分钟刷新一次
+        });
+    </script>
+}

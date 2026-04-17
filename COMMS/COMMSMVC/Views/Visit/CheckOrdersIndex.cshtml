@@ -1,0 +1,173 @@
+﻿@model List<COMMSMVC.Models.CheckOrdersIndex>
+@{
+    ViewData["Title"] = "检查单列表";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* 自定义状态徽章字体颜色 */
+    .table-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .badge-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-secondary {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .btn-create {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+        .btn-create:hover {
+            background-color: #0b5ed7;
+        }
+
+    .action-links a {
+        margin-right: 0.5rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+    .badge-warning {
+        color: #212529 !important; /* 深灰色 */
+        background-color: #fff3cd; /* 可保留原背景或自定义 */
+    }
+
+    .badge-info {
+        color: #212529 !important;
+        background-color: #d1ecf1;
+    }
+
+    .badge-success {
+        color: #212529 !important;
+        background-color: #d4edda;
+    }
+
+    .badge-secondary {
+        color: #212529 !important;
+        background-color: #e2e3e5;
+    }</style>
+
+<div class="table-container">
+    <h2 class="page-title">检查单列表</h2>
+@*     @foreach (var item in Model)
+    {
+           
+        <a asp-action="CreateCheckOrders" class="btn-create" asp-route-id="@item.AppointmentID">+ 新建检查单</a>            
+     } *@
+        <a asp-action="CreateCheckOrder" class="btn-create">+ 新建检查单</a>
+        <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>预约ID</th>
+                <th>患者姓名</th>
+                <th>检查项目</th>
+                <th>状态</th>
+                <th>结果</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CheckOrderID</td>
+                    <td>@item.AppointmentID</td>
+                    <td>@item.PatientName</td>  <!-- 直接使用模型中的患者姓名 -->
+                    <td>@item.CheckItemName</td> <!-- 直接使用模型中的检查项目名称 -->
+                    <td>
+                        @{
+                            string badgeClass = "badge-secondary";
+                            if (item.Status == "已开单") badgeClass = "badge-warning";
+                            else if (item.Status == "已检查") badgeClass = "badge-info";
+                            else if (item.Status == "已出报告") badgeClass = "badge-success";
+                            else if (item.Status == "已审核") badgeClass = "badge-success";
+                        }
+                        <span class="badge @badgeClass">@item.Status</span>
+                    </td>
+                    <td>@item.Result</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td class="action-links">
+                            @* <a asp-action="CreateCheckOrders" asp-route-id="@item.AppointmentID">创建</a> *@
+                            <a asp-action="GetCheckOrdersByAppointmentId" asp-route-id="@item.AppointmentID">查看挂号详情</a>
+                            @* <a asp-action="GetCheckOrdersByAppointmentId" asp-route-id="@item.CheckOrderID">详情</a> *@
+                            <a asp-action="EditCheckOrdersByCheckOrderId" asp-route-id="@item.CheckOrderID">编辑</a>
+                        <a asp-action="Delete" asp-route-id="@item.CheckOrderID" onclick="return confirm('确认删除？')">删除</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

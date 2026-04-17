@@ -1,0 +1,98 @@
+﻿@model Tuple<List<COMMSMVC.Models.MedicalRecord>, COMMSMVC.Models.Patient>
+
+@{
+    ViewData["Title"] = "病历记录管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>患者历史病历记录</h1>
+
+<p>
+    @foreach (var item in Model.Item1)
+    {
+        <a asp-action="CreateMedicalRecord" class="btn btn-primary" asp-route-id="@item.AppointmentID">
+            <i class="bi bi-plus-circle"></i> 新增病历记录
+    </a>
+    }
+</p> 
+<p>
+    @foreach (var item in Model.Item1)
+    {
+        <a asp-action="EditPatientMedicalRecordById" class="btn btn-primary" asp-route-id="@item.AppointmentID">
+            <i class="bi bi-plus-circle"></i> 修改病历记录
+        </a>
+    }
+</p>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>记录ID</th>
+                <th>预约ID</th>
+                    <th>患者姓名</th>
+                <th>患者主诉</th>
+                <th>诊断结果</th>
+                <th>治疗方案</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Item1)
+            {
+                <tr>
+                    <td>@item.RecordID</td>
+                    <td>@item.AppointmentID</td>
+                    <td>@(Model.Item2 != null ? Model.Item2.Name : "未知患者")</td>
+                    <td>@item.PatientStatement</td>
+                    <td>@item.Diagnosis</td>
+                    <td>@item.Treatment</td>
+                    <td>
+                        @{
+                            // 根据状态设置不同的徽章样式
+                            string badgeClass = item.Status switch
+                            {
+                                "出诊" => "bg-primary",
+                                "待诊" => "bg-warning text-dark",
+                                "复诊" => "bg-info",
+                                "完成" => "bg-success",
+                                "取消" or "已取消" => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@item.Status</span>
+                    </td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.RecordID" class="btn btn-sm btn-outline-info" title="详情">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="EditPatientMedicalRecordById" asp-route-id="@item.AppointmentID" class="btn btn-sm btn-outline-warning" title="编辑">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a asp-action="GetPatientAppointmentById" asp-route-id="@item.AppointmentID" class="btn-back">← 返回列表</a>
+                        <form asp-action="Delete" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.RecordID" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="删除"
+                                    onclick="return confirm('确定要删除该病历记录吗？');">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        // 可以在这里添加额外的JavaScript功能
+    </script>
+}

@@ -1,0 +1,229 @@
+﻿@model List<COMMSMVC.Models.PrescriptionsIndexModel>
+@{
+    ViewData["Title"] = "处方管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@* 加搜索框，根据处方查询，患者姓名模糊查询，编辑是编辑detail，删除是删除再处方表，先明细表，然后更新药品库存，为后续发药做准备 ，模板要加上处方管理*@
+<style>
+    .table-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .badge-male {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .badge-female {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .badge-unknown {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-create {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+        .btn-create:hover {
+            background-color: #0b5ed7;
+        }
+
+    .action-links a {
+        margin-right: 0.5rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+
+    .search-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: flex-end;
+    }
+
+        .search-bar .form-group {
+            flex: 1;
+        }
+
+            .search-bar .form-group label {
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+
+        .search-bar .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+        }
+
+    /* 补充按钮样式 */
+    .btn-search, .btn-reset {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn-search {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+        .btn-search:hover {
+            background-color: #0b5ed7;
+        }
+
+    .btn-reset {
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+        .btn-reset:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+
+    .btn-link { /* 为使删除按钮与链接样式一致，可以添加如下 CSS（已在上面的按钮中内联样式，但也可统一）     background: none; */
+        
+        border: none;
+        color: #0d6efd;
+        padding: 0;
+        margin: 0 0 0 5px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+        .btn-link:hover {
+            color: #0b5ed7;
+        }
+</style>
+<div class="table-container">
+    <h2 class="page-title">处方管理</h2>
+    
+    <a asp-action="Create" class="btn-create">+ 新建处方</a>
+<div class="table-container">    
+    <!-- 搜索框 -->
+    <form method="get" asp-action="Index" class="search-bar">
+        <div class="search-group">
+            <label for="prescriptionId">处方ID（精准）</label>
+            <input type="number" id="prescriptionId" name="prescriptionId" value="@ViewBag.PrescriptionID" placeholder="请输入处方ID" />
+        </div>
+        <div class="search-group">
+            <label for="patientName">患者姓名（模糊）</label>
+            <input type="text" id="patientName" name="patientName" value="@ViewBag.PatientName" placeholder="请输入患者姓名" />
+        </div>
+        <div>
+            <button type="submit" class="btn-search">搜索</button>
+            <a asp-action="Index" class="btn-reset">重置</a>
+        </div>
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>处方ID</th>
+                <th>预约ID</th>
+                <th>患者姓名</th>
+                <th>明细ID</th>
+                <th>药品名称</th>
+                <th>剂量</th>
+                <th>数量</th>
+                <th>频次</th>
+                <th>时长(天)</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.PrescriptionID</td>
+                    <td>@item.AppointmentID</td>
+                    <td>@item.PatientName</td>
+                    <td>@item.DetailID</td>
+                    <td>@item.MedicationName</td>
+                    <td>@item.DoseValue @item.DoseUnit</td>
+                    <td>@item.Quantity</td>
+                    <td>@(string.IsNullOrEmpty(item.Frequency) ? "-" : item.Frequency)</td>
+                    <td>@(item.Duration > 0 ? item.Duration.ToString() : "-")</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="action-links">
+                        <!-- 隐藏字段：存储 MedicationID，不显示在表格中 -->
+                        <input type="hidden" name="medicationId" value="@item.MedicationID" />
+                            <a asp-action="Details" asp-route-id="@item.DetailID">详情</a>
+                            <a asp-action="EditDetail" asp-route-id="@item.DetailID">编辑</a>
+                            <form asp-action="DeletePrescription" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.PrescriptionID" />
+                                <button type="submit" class="btn-link" style="background:none; border:none; color:#0d6efd; padding:0; margin:0 0 0 5px; cursor:pointer; text-decoration:underline;" onclick="return confirm('确定要删除该处方吗？');">删除</button>
+                            </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

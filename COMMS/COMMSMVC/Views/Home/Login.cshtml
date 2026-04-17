@@ -1,27 +1,616 @@
 ﻿@model LoginRequest
- @{
-     ViewData["Title"]= "Login";
-     Layout ="~/Views/Shared/_Layout.cshtml";
- }
- <h1>Login</h1>
-<form method="post">
-<div>
-<label>Username:</label>
-<input asp-for="Username"/>
-</div>
-
-<div>
-    <label>Password:</label>
-    <input asp-for="Password" type-"password"/>
-</div>
-<button type="submit">Login</button>
-
-</form>
-@if(ViewBag.Error != null){
-
-
-<p style-"color:red">@ViewBag.Error</p>
+@{
+    ViewData["Title"] = "社区门诊医务管理系统 - 登录";
+    Layout = null;
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-@if(ViewBag.Token != null){
-<p style-"color:green">JWT Token: @ViewBag.Token</p>
-}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* 背景装饰圆圈 */
+            .bg-circles {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                z-index: 0;
+            }
+
+                .bg-circles li {
+                    position: absolute;
+                    display: block;
+                    list-style: none;
+                    width: 20px;
+                    height: 20px;
+                    background: rgba(255, 255, 255, 0.2);
+                    animation: animate 25s linear infinite;
+                    bottom: -150px;
+                    border-radius: 50%;
+                }
+
+                    .bg-circles li:nth-child(1) {
+                        left: 25%;
+                        width: 80px;
+                        height: 80px;
+                        animation-delay: 0s;
+                    }
+
+                    .bg-circles li:nth-child(2) {
+                        left: 10%;
+                        width: 20px;
+                        height: 20px;
+                        animation-delay: 2s;
+                        animation-duration: 12s;
+                    }
+
+                    .bg-circles li:nth-child(3) {
+                        left: 70%;
+                        width: 20px;
+                        height: 20px;
+                        animation-delay: 4s;
+                    }
+
+                    .bg-circles li:nth-child(4) {
+                        left: 40%;
+                        width: 60px;
+                        height: 60px;
+                        animation-delay: 0s;
+                        animation-duration: 18s;
+                    }
+
+                    .bg-circles li:nth-child(5) {
+                        left: 65%;
+                        width: 20px;
+                        height: 20px;
+                        animation-delay: 0s;
+                    }
+
+                    .bg-circles li:nth-child(6) {
+                        left: 75%;
+                        width: 110px;
+                        height: 110px;
+                        animation-delay: 3s;
+                    }
+
+                    .bg-circles li:nth-child(7) {
+                        left: 35%;
+                        width: 150px;
+                        height: 150px;
+                        animation-delay: 7s;
+                    }
+
+                    .bg-circles li:nth-child(8) {
+                        left: 50%;
+                        width: 25px;
+                        height: 25px;
+                        animation-delay: 15s;
+                        animation-duration: 45s;
+                    }
+
+                    .bg-circles li:nth-child(9) {
+                        left: 20%;
+                        width: 15px;
+                        height: 15px;
+                        animation-delay: 2s;
+                        animation-duration: 35s;
+                    }
+
+                    .bg-circles li:nth-child(10) {
+                        left: 85%;
+                        width: 150px;
+                        height: 150px;
+                        animation-delay: 0s;
+                        animation-duration: 11s;
+                    }
+
+            @@keyframes animate {
+                0% {
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 1;
+                    border-radius: 0;
+                }
+
+                100% {
+                    transform: translateY(-1000px) rotate(720deg);
+                    opacity: 0;
+                    border-radius: 50%;
+                }
+            }
+
+            /* 登录容器 */
+            .login-container {
+                position: relative;
+                z-index: 1;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+                padding: 40px;
+                width: 100%;
+                max-width: 420px;
+                margin: 20px;
+                animation: slideUp 0.6s ease-out;
+            }
+
+            @@keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* 系统标题区域 */
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+
+            .logo-icon {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+
+                .logo-icon svg {
+                    width: 40px;
+                    height: 40px;
+                    fill: white;
+                }
+
+            .system-title {
+                color: #333;
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 5px;
+            }
+
+            .system-subtitle {
+                color: #666;
+                font-size: 14px;
+            }
+
+            /* 表单样式 */
+            .form-group {
+                margin-bottom: 20px;
+                position: relative;
+            }
+
+            .form-label {
+                display: block;
+                margin-bottom: 8px;
+                color: #555;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .input-wrapper {
+                position: relative;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 12px 15px 12px 45px;
+                border: 2px solid #e1e1e1;
+                border-radius: 10px;
+                font-size: 15px;
+                transition: all 0.3s ease;
+                background-color: #fafafa;
+            }
+
+                .form-input:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    background-color: #fff;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                }
+
+                .form-input.error {
+                    border-color: #dc2626;
+                    background-color: #fef2f2;
+                    animation: shake 0.5s ease-in-out;
+                }
+
+            .input-icon {
+                position: absolute;
+                left: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #999;
+                font-size: 18px;
+                transition: color 0.3s;
+            }
+
+            /* 登录按钮 */
+            .btn-login {
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 10px;
+                position: relative;
+                overflow: hidden;
+            }
+
+                .btn-login:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+                }
+
+                .btn-login:disabled {
+                    opacity: 0.8;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+            /* 弹窗样式 - 新增 */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease;
+            }
+
+                .modal-overlay.show {
+                    display: flex;
+                }
+
+            @@keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .modal-content {
+                background: white;
+                border-radius: 16px;
+                padding: 30px 40px;
+                text-align: center;
+                max-width: 320px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                animation: scaleIn 0.3s ease;
+                transform: scale(0.9);
+            }
+
+            .modal-overlay.show .modal-content {
+                transform: scale(1);
+            }
+
+            @@keyframes scaleIn {
+                from {
+                    transform: scale(0.8);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .modal-icon {
+                width: 60px;
+                height: 60px;
+                background: #fee2e2;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                font-size: 30px;
+            }
+
+            .modal-title {
+                color: #333;
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+
+            .modal-message {
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .btn-modal {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 10px 30px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+                .btn-modal:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                }
+
+            /* 提示信息 */
+            .alert {
+                padding: 12px 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .alert-error {
+                background-color: #fee2e2;
+                border: 1px solid #fecaca;
+                color: #dc2626;
+            }
+
+            .alert-success {
+                background-color: #d1fae5;
+                border: 1px solid #a7f3d0;
+                color: #059669;
+            }
+
+            @@keyframes shake {
+                0%, 100% {
+                    transform: translateX(0);
+                }
+
+                25% {
+                    transform: translateX(-5px);
+                }
+
+                75% {
+                    transform: translateX(5px);
+                }
+            }
+
+            /* 页脚信息 */
+            .footer {
+                text-align: center;
+                margin-top: 25px;
+                color: #888;
+                font-size: 12px;
+            }
+
+            /* Token显示区域特殊样式 */
+            .token-box {
+                background: #f3f4f6;
+                padding: 10px;
+                border-radius: 6px;
+                word-break: break-all;
+                font-family: monospace;
+                font-size: 12px;
+                margin-top: 8px;
+                max-height: 100px;
+                overflow-y: auto;
+            }
+
+            /* 响应式 */
+            @@media (max-width: 480px) {
+                .login-container {
+                    padding: 30px 20px;
+                    margin: 10px;
+                }
+
+                .system-title {
+                    font-size: 20px;
+                }
+            }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <ul class="bg-circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <div class="login-container">
+        <!-- 头部Logo和标题 -->
+        <div class="header">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z" />
+                </svg>
+            </div>
+            <h1 class="system-title">社区门诊医务管理系统</h1>
+            <p class="system-subtitle">Community Clinic Management System</p>
+        </div>
+
+        <!-- 登录表单 -->
+        <form method="post" asp-action="Login" asp-controller="Home" id="loginForm">
+            <div class="form-group">
+                <label class="form-label" asp-for="Username">用户名</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input asp-for="Username" class="form-input" placeholder="请输入用户名" autocomplete="username" id="username" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" asp-for="Password">密码</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input asp-for="Password" type="password" class="form-input" placeholder="请输入密码" autocomplete="current-password" id="password" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">登 录</button>
+        </form>
+
+        <!-- 后端错误提示 -->
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-error">
+                <span>⚠️</span>
+                <span>@ViewBag.Error</span>
+            </div>
+        }
+
+        <!-- 成功提示（Token显示） -->
+        @if (ViewBag.Token != null)
+        {
+            <div class="alert alert-success">
+                <span>✅</span>
+                <div>
+                    <div>登录成功！JWT Token：</div>
+                    <div class="token-box">@ViewBag.Token</div>
+                </div>
+            </div>
+        }
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>© 2026 社区门诊医务管理系统 v1.0</p>
+            <p>技术支持：信息科</p>
+        </div>
+    </div>
+
+    <!-- 弹窗模态框 - 新增 -->
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal-content">
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title">提示</div>
+            <div class="modal-message" id="modalMessage">请填写完整信息</div>
+            <button class="btn-modal" onclick="closeModal()">确定</button>
+        </div>
+    </div>
+
+    <script>
+            // 显示弹窗
+            function showModal(message) {
+                document.getElementById('modalMessage').textContent = message;
+                document.getElementById('errorModal').classList.add('show');
+            }
+
+            // 关闭弹窗
+            function closeModal() {
+                document.getElementById('errorModal').classList.remove('show');
+            }
+
+            // 点击遮罩关闭弹窗
+            document.getElementById('errorModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // 登录表单验证
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                const username = document.getElementById('username');
+                const password = document.getElementById('password');
+                const btn = document.getElementById('btnLogin');
+
+                // 重置样式
+                username.classList.remove('error');
+                password.classList.remove('error');
+
+                // 验证用户名
+                if (!username.value || username.value.trim() === '') {
+                    username.classList.add('error');
+                    username.focus();
+                    showModal('请输入用户名');
+                    e.preventDefault();
+                    return false;
+                }
+
+                // 验证密码
+                if (!password.value || password.value.trim() === '') {
+                    password.classList.add('error');
+                    password.focus();
+                    showModal('请输入密码');
+                    e.preventDefault();
+                    return false;
+                }
+
+                // 验证通过，显示加载状态
+                btn.innerHTML = '登录中...';
+                btn.disabled = true;
+                return true;
+            });
+
+            // 输入时实时移除错误样式
+            document.getElementById('username').addEventListener('input', function() {
+                this.classList.remove('error');
+            });
+
+            document.getElementById('password').addEventListener('input', function() {
+                this.classList.remove('error');
+            });
+
+            // 输入框焦点动画
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.querySelector('.input-icon').style.color = '#667eea';
+                });
+                input.addEventListener('blur', function() {
+                    this.parentElement.querySelector('.input-icon').style.color = '#999';
+                });
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+﻿@using System.Data
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "编辑患者信息 - 社区门诊医务管理系统";
+    DataRow patientData = ViewBag.PatientData;
+    // 初始化空表单数据，避免空引用
+    var formData = ViewBag.FormData ?? new Microsoft.AspNetCore.Http.FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>());
+
+    // ========== 1. 统一处理所有字段值（修复StringValues问题） ==========
+    // 核心：所有formData取值用ToString()，而非FirstOrDefault()
+    string patientIdValue = formData["PatientID"].ToString() ?? (patientData != null ? patientData["PatientID"].ToString() : "");
+    string nameValue = formData["Name"].ToString() ?? (patientData != null ? patientData["Name"].ToString() : "");
+    string idCardValue = formData["IDCard"].ToString() ?? (patientData != null ? patientData["IDCard"].ToString() : "");
+    string phoneValue = formData["Phone"].ToString() ?? (patientData != null ? patientData["Phone"].ToString() : "");
+    string genderValue = formData["Gender"].ToString() ?? (patientData != null ? patientData["Gender"]?.ToString() ?? "" : "");
+    string nationValue = formData["Nation"].ToString() ?? (patientData != null ? patientData["Nation"]?.ToString() ?? "" : "");
+    string insuranceNoValue = formData["InsuranceNo"].ToString() ?? (patientData != null ? patientData["InsuranceNo"]?.ToString() ?? "" : "");
+    string workUnitValue = formData["WorkUnit"].ToString() ?? (patientData != null ? patientData["WorkUnit"]?.ToString() ?? "" : "");
+    string occupationValue = formData["Occupation"].ToString() ?? (patientData != null ? patientData["Occupation"]?.ToString() ?? "" : "");
+    string addressValue = formData["Address"].ToString() ?? (patientData != null ? patientData["Address"]?.ToString() ?? "" : "");
+    string pastMedicalHistoryValue = formData["PastMedicalHistory"].ToString() ?? (patientData != null ? patientData["PastMedicalHistory"]?.ToString() ?? "" : "");
+    string drugAllergyHistoryValue = formData["DrugAllergyHistory"].ToString() ?? (patientData != null ? patientData["DrugAllergyHistory"]?.ToString() ?? "" : "");
+    string guardianNameValue = formData["GuardianName"].ToString() ?? (patientData != null ? patientData["GuardianName"]?.ToString() ?? "" : "");
+    string guardianPhoneValue = formData["GuardianPhone"].ToString() ?? (patientData != null ? patientData["GuardianPhone"]?.ToString() ?? "" : "");
+    string guardianRelationshipValue = formData["GuardianRelationship"].ToString() ?? (patientData != null ? patientData["GuardianRelationship"]?.ToString() ?? "" : "");
+    string guardianAddressValue = formData["GuardianAddress"].ToString() ?? (patientData != null ? patientData["GuardianAddress"]?.ToString() ?? "" : "");
+    string remarkValue = formData["Remark"].ToString() ?? (patientData != null ? patientData["Remark"]?.ToString() ?? "" : "");
+
+    // 婚姻状况（布尔值处理）
+    bool? isMarriedValue = null;
+    string isMarriedStr = formData["IsMarried"].ToString();
+    if (!string.IsNullOrEmpty(isMarriedStr))
+    {
+        bool.TryParse(isMarriedStr, out bool isMarried);
+        isMarriedValue = isMarried;
+    }
+    else if (patientData != null && patientData["IsMarried"] != DBNull.Value)
+    {
+        isMarriedValue = Convert.ToBoolean(patientData["IsMarried"]);
+    }
+
+    // 生日（日期格式处理）
+    string birthdayValue = formData["Birthday"].ToString() ?? 
+                          (patientData != null && patientData["Birthday"] != DBNull.Value 
+                              ? Convert.ToDateTime(patientData["Birthday"]).ToString("yyyy-MM-dd") 
+                              : "");
+
+    // ========== 2. 处理下拉框选中状态（避免标签助手冲突） ==========
+    string genderSelectedMale = genderValue == "男" ? "selected" : "";
+    string genderSelectedFemale = genderValue == "女" ? "selected" : "";
+    string marriedSelectedTrue = isMarriedValue == true ? "selected" : "";
+    string marriedSelectedFalse = isMarriedValue == false ? "selected" : "";
+}
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .form-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-label.required::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 4px;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        outline: none;
+    }
+
+    textarea.form-control {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .btn-submit {
+        background-color: #0d6efd;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+
+    .btn-submit:hover {
+        background-color: #0b5ed7;
+    }
+
+    .btn-back {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 1rem;
+        margin-right: 1rem;
+        text-decoration: none;
+    }
+
+    .btn-back:hover {
+        background-color: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+
+    .alert-error {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+</style>
+
+<div class="form-container">
+    <!-- 错误提示 -->
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="alert-error">
+            <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+        </div>
+    }
+
+    <!-- 无数据提示 -->
+    @if (patientData == null && formData.Count == 0)
+    {
+        <div class="alert-warning">
+            <i class="bi bi-info-circle"></i> 未获取到患者信息，请返回列表页重新选择！
+        </div>
+        <a href="/Patient/GetPatientInfo" class="btn-back">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+        return;
+    }
+
+    <h3 class="form-title">
+        <i class="bi bi-pencil"></i> 编辑患者信息
+    </h3>
+
+    <form asp-controller="PatientInfo" asp-action="Edit" method="post">
+        <!-- 隐藏PatientID（修复取值方式） -->
+        <input type="hidden" name="PatientID" value="@patientIdValue">
+
+        <!-- 基础信息 -->
+        <h5 class="mb-3 text-secondary">基础信息</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required">姓名</label>
+                <input type="text" class="form-control" name="Name" 
+                       value="@nameValue" 
+                       required maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">身份证号</label>
+                <input type="text" class="form-control" name="IDCard" 
+                       value="@idCardValue" 
+                       required maxlength="18">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required">联系电话</label>
+                <input type="tel" class="form-control" name="Phone" 
+                       value="@phoneValue" 
+                       required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label">生日</label>
+                <input type="date" class="form-control" name="Birthday" value="@birthdayValue">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">性别</label>
+                <!-- 修复标签助手冲突 + 选中状态 -->
+                <select class="form-control" name="Gender">
+                    <option value="">请选择</option>
+                    <option value="男" selectd="@genderSelectedMale">男</option>
+                    <option value="女"selected=  "@genderSelectedFemale">女</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">婚姻状况</label>
+                <!-- 修复标签助手冲突 + 选中状态 -->
+                <select class="form-control" name="IsMarried">
+                    <option value="">请选择婚姻状况</option>
+                    <option value="true" select="@marriedSelectedTrue">已婚</option>
+                    <option value="false" select="@marriedSelectedFalse">未婚</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">民族</label>
+                <input type="text" class="form-control" name="Nation" 
+                       value="@nationValue" 
+                       maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label">医保号</label>
+                <input type="text" class="form-control" name="InsuranceNo" 
+                       value="@insuranceNoValue" 
+                       maxlength="30">
+            </div>
+        </div>
+
+        <!-- 工作/地址信息 -->
+        <h5 class="mb-3 mt-4 text-secondary">工作/地址信息</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">工作单位</label>
+                <input type="text" class="form-control" name="WorkUnit" 
+                       value="@workUnitValue" 
+                       maxlength="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label">职业</label>
+                <input type="text" class="form-control" name="Occupation" 
+                       value="@occupationValue" 
+                       maxlength="50">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">通讯地址</label>
+            <textarea class="form-control" name="Address" maxlength="500">@addressValue</textarea>
+        </div>
+
+        <!-- 医疗信息 -->
+        <h5 class="mb-3 mt-4 text-secondary">医疗信息</h5>
+        <div class="form-group">
+            <label class="form-label">既往病史</label>
+            <textarea class="form-control" name="PastMedicalHistory" maxlength="1000">@pastMedicalHistoryValue</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">药物过敏史</label>
+            <textarea class="form-control" name="DrugAllergyHistory" maxlength="1000">@drugAllergyHistoryValue</textarea>
+        </div>
+
+        <!-- 监护人信息 -->
+        <h5 class="mb-3 mt-4 text-secondary">监护人信息（未成年人/无民事行为能力人填写）</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">监护人姓名</label>
+                <input type="text" class="form-control" name="GuardianName" 
+                       value="@guardianNameValue" 
+                       maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">监护人联系电话</label>
+                <input type="tel" class="form-control" name="GuardianPhone" 
+                       value="@guardianPhoneValue" 
+                       maxlength="20">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">监护人与患者关系</label>
+            <input type="text" class="form-control" name="GuardianRelationship" 
+                   value="@guardianRelationshipValue" 
+                   maxlength="20">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">监护人联系地址</label>
+            <textarea class="form-control" name="GuardianAddress" maxlength="500">@guardianAddressValue</textarea>
+        </div>
+
+        <!-- 备注 -->
+        <div class="form-group mt-4">
+            <label class="form-label">备注</label>
+            <textarea class="form-control" name="Remark" maxlength="500">@remarkValue</textarea>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4">
+            <a href="/PatientInfo/Index" class="btn-back">
+                <i class="bi bi-arrow-left"></i> 返回
+            </a>
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-save"></i> 保存修改
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 移除textarea的多余空格
+            $('textarea.form-control').each(function() {
+                $(this).val($(this).val().trim());
+            });
+
+            // 表单提交确认
+            $('form').submit(function() {
+                return confirm("确认修改患者信息吗？修改后将实时生效！");
+            });
+        });
+    </script>
+}

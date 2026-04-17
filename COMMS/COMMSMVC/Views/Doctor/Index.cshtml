@@ -1,0 +1,235 @@
+﻿@using System.Data
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "医生管理 - 社区门诊医务管理系统";
+    DataTable dtDoctors = Model as DataTable;
+}
+
+<!-- 医生管理列表样式 -->
+<style>
+    .doctor-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-add {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .btn-add:hover {
+            background-color: #218838;
+            color: white;
+            text-decoration: none;
+        }
+
+    .table-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .doctor-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .doctor-table th {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .doctor-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .doctor-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .btn-edit {
+        background-color: #0d6efd;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+    }
+
+        .btn-edit:hover {
+            background-color: #0b5ed7;
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+            color: white;
+            text-decoration: none;
+        }
+
+    .status-tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
+<div class="doctor-container">
+    <!-- 提示信息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-error">
+            <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="alert alert-error">
+            <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+        </div>
+    }
+
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <h2 class="fw-bold text-primary">
+            <i class="bi bi-person-doctor"></i> 医生管理
+        </h2>
+        <a href="/Doctor/Create" class="btn-add">
+            <i class="bi bi-plus-circle"></i> 新增医生
+        </a>
+    </div>
+
+    <!-- 医生列表 -->
+    <div class="table-container">
+        @if (dtDoctors != null && dtDoctors.Rows.Count > 0)
+        {
+            <table class="doctor-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>医生姓名</th>
+                        <th>职称</th>
+                        <th>所属科室</th>
+                        <th>联系电话</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in dtDoctors.Rows)
+                    {
+                        <tr>
+                            <td>@row["DoctorID"]</td>
+                            <td>@row["DoctorName"]</td>
+                            <td>@row["Title"]</td>
+                            <td>@row["DeptName"]</td>
+                            <td>@row["Phone"]</td>
+                            <td>
+                                @if (Convert.ToInt32(row["IsActive"]) == 1)
+                                {
+                                    <span class="status-tag status-active">启用</span>
+                                }
+                                else
+                                {
+                                    <span class="status-tag status-inactive">禁用</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="/Doctor/Edit/@row["DoctorID"]" class="btn-edit">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </a>
+                                <a href="/Doctor/Delete/@row["DoctorID"]" class="btn-delete" onclick="return confirm('确认删除该医生信息吗？删除后无法恢复！')">
+                                    <i class="bi bi-trash"></i> 删除
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-info-circle text-muted fs-3"></i>
+                <p class="text-muted mt-2">暂无医生信息，请点击"新增医生"添加</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            console.log("医生管理列表加载完成");
+        });
+    </script>
+}

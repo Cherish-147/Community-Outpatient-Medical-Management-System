@@ -1,0 +1,141 @@
+﻿@model COMMSMVC.Models.PaymentsIndex
+@{
+    ViewData["Title"] = "支付详情";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .detail-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .detail-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+    }
+
+        .detail-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            .detail-table td:first-child {
+                font-weight: 600;
+                width: 30%;
+                background-color: #f8f9fa;
+            }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .badge-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-secondary {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #0d6efd;
+        text-decoration: none;
+        text-align: center;
+        width: 100%;
+    }
+
+        .btn-back:hover {
+            text-decoration: underline;
+        }
+</style>
+<div class="btn-group" style="margin-bottom: 20px;">
+    <a asp-action="ExportToExcel" asp-route-id="@Model.PaymentID" class="btn btn-success">
+        <i class="bi bi-file-excel"></i> 导出 Excel
+    </a>
+    <a asp-action="ExportToPdf" asp-route-id="@Model.PaymentID" class="btn btn-danger">
+        <i class="bi bi-file-pdf"></i> 导出 PDF
+    </a>
+    <a asp-action="ExportToImage" asp-route-id="@Model.PaymentID" class="btn btn-info">
+        <i class="bi bi-file-image"></i> 导出图片
+    </a>
+</div>
+<div class="detail-container">
+    <h2 class="detail-title">支付详情</h2>
+
+    <table class="detail-table">
+        <tr>
+            <td>支付ID</td>
+            <td>@Model.PaymentID</td>
+        </tr>
+        <tr>
+            <td>预约ID</td>
+            <td>@Model.AppointmentID</td>
+        </tr>
+        <tr>
+            <td>患者ID</td>
+            <td>@Model.PatientID</td>
+        </tr>
+        <tr>
+            <td>患者姓名</td>
+            <td>@Model.PatientName</td>
+        </tr>
+        <tr>
+            <td>金额</td>
+            <td>@Model.Amount.ToString("C")</td>
+        </tr>
+        <tr>
+            <td>支付方式</td>
+            <td>@(string.IsNullOrEmpty(Model.Method) ? "-" : Model.Method)</td>
+        </tr>
+        <tr>
+            <td>状态</td>
+            <td>
+                @{
+                    string badgeClass = "badge-secondary";
+                    if (Model.Status == "已支付") badgeClass = "badge-success";
+                    else if (Model.Status == "待支付") badgeClass = "badge-warning";
+                    else if (Model.Status == "退款中") badgeClass = "badge-info";
+                    else if (Model.Status == "已退款") badgeClass = "badge-secondary";
+                }
+                <span class="badge @badgeClass">@(string.IsNullOrEmpty(Model.Status) ? "-" : Model.Status)</span>
+            </td>
+        </tr>
+        <tr>
+            <td>支付时间</td>
+            <td>@Model.PaidAt.ToString("yyyy-MM-dd HH:mm")</td>
+        </tr>
+    </table>
+
+    <a asp-action="Index" class="btn-back">← 返回支付记录列表</a>
+</div>

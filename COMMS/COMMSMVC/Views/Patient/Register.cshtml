@@ -1,0 +1,383 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout_Patient.cshtml"; // 使用患者专属布局
+    ViewData["Title"] = "患者信息注册 - 社区门诊医务管理系统";
+}
+
+<!-- 注册页面专属样式（保留原有样式，适配患者布局） -->
+<style>
+    .register-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        margin-top: 2rem;
+    }
+
+    .form-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .required-mark {
+        color: #dc3545;
+        margin-left: 2px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background-color: #0b5ed7;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+    }
+
+    .form-col {
+        flex: 1;
+        padding: 0 0.75rem;
+        min-width: 250px;
+    }
+
+    .alert-error {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-success {
+        color: #0f5132;
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<!-- 患者布局的内容区域 -->
+<div class="container-fluid py-4">
+    <div class="register-container">
+        <h2 class="form-title">
+            <i class="bi bi-person-plus"></i> 患者信息注册
+        </h2>
+
+        <!-- 错误提示 -->
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle"></i> @ViewBag.Error
+            </div>
+        }
+
+        <!-- 成功提示 -->
+        @if (!string.IsNullOrEmpty(ViewBag.Success))
+        {
+            <div class="alert-success">
+                <i class="bi bi-check-circle"></i> @ViewBag.Success
+            </div>
+        }
+
+        <!-- 患者注册表单 - 提交到Patient控制器的Register方法 -->
+        <form asp-controller="Patient" asp-action="Register" method="post">
+            <!-- 基础信息行1 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            姓名 <span class="required-mark">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="Name" placeholder="请输入患者姓名" required
+                               value="@ViewBag.Name" maxlength="50">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            性别 <span class="required-mark">*</span>
+                        </label>
+                        <select class="form-control" name="Gender" required>
+                            <option value="">请选择性别</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基础信息行2 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            出生日期 <span class="required-mark">*</span>
+                        </label>
+                        <input type="date" class="form-control" name="Birthday" required
+                               value="@ViewBag.Birthday">
+                        <div class="form-text">年龄将根据出生日期自动计算</div>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            婚姻状况
+                        </label>
+                        <select class="form-control" name="IsMarried">
+                            <option value="">请选择婚姻状况</option>
+                            <option value="true" >已婚</option>
+                            <option value="false" )>未婚</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基础信息行3 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            民族
+                        </label>
+                        <input type="text" class="form-control" name="Nation" placeholder="如：汉族"
+                               value="@ViewBag.Nation" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            身份证号 <span class="required-mark">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="IDCard" placeholder="请输入18位身份证号" required
+                               value="@ViewBag.IDCard" maxlength="18">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系方式行 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            联系电话 <span class="required-mark">*</span>
+                        </label>
+                        <input type="tel" class="form-control" name="Phone" placeholder="请输入联系电话" required
+                               value="@ViewBag.Phone" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            医保号
+                        </label>
+                        <input type="text" class="form-control" name="InsuranceNo" placeholder="请输入医保编号"
+                               value="@ViewBag.InsuranceNo" maxlength="30">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 职业信息行 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            工作单位
+                        </label>
+                        <input type="text" class="form-control" name="WorkUnit" placeholder="请输入工作单位"
+                               value="@ViewBag.WorkUnit" maxlength="100">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            职业
+                        </label>
+                        <input type="text" class="form-control" name="Occupation" placeholder="请输入职业"
+                               value="@ViewBag.Occupation" maxlength="50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 地址信息 -->
+            <div class="form-group mb-4">
+                <label class="form-label">
+                    通讯地址
+                </label>
+                <textarea class="form-control" name="Address" rows="2" placeholder="请输入详细通讯地址"
+                          maxlength="500">@ViewBag.Address</textarea>
+            </div>
+
+            <!-- 医疗史信息 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            既往病史
+                        </label>
+                        <textarea class="form-control" name="PastMedicalHistory" rows="2" placeholder="请输入既往病史（如：高血压、糖尿病）"
+                                  maxlength="5000">@ViewBag.PastMedicalHistory</textarea>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            药物过敏史
+                        </label>
+                        <textarea class="form-control" name="DrugAllergyHistory" rows="2" placeholder="请输入药物过敏史（如：青霉素过敏）"
+                                  maxlength="5000">@ViewBag.DrugAllergyHistory</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 监护人信息标题 -->
+            <h5 class="mb-3 text-secondary">
+                <i class="bi bi-people"></i> 监护人信息（未成年人/无民事行为能力人必填）
+            </h5>
+
+            <!-- 监护人信息行1 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            监护人姓名
+                        </label>
+                        <input type="text" class="form-control" name="GuardianName" placeholder="请输入监护人姓名"
+                               value="@ViewBag.GuardianName" maxlength="50">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            监护人联系电话
+                        </label>
+                        <input type="tel" class="form-control" name="GuardianPhone" placeholder="请输入监护人联系电话"
+                               value="@ViewBag.GuardianPhone" maxlength="20">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 监护人信息行2 -->
+            <div class="form-row mb-4">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            监护人与患者关系
+                        </label>
+                        <input type="text" class="form-control" name="GuardianRelationship" placeholder="如：父子、母子"
+                               value="@ViewBag.GuardianRelationship" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">
+                            监护人联系地址
+                        </label>
+                        <textarea class="form-control" name="GuardianAddress" rows="2" placeholder="请输入监护人详细联系地址"
+                                  maxlength="500">@ViewBag.GuardianAddress</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 备注信息 -->
+            <div class="form-group mb-4">
+                <label class="form-label">
+                    备注信息
+                </label>
+                <textarea class="form-control" name="Remark" rows="2" placeholder="请输入其他需要说明的信息"
+                          maxlength="500">@ViewBag.Remark</textarea>
+            </div>
+
+            <!-- 提交按钮 -->
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-save"></i> 提交注册信息
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 注册页面脚本 -->
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 身份证号格式验证
+            // $('input[name="IDCard"]').blur(function() {
+            //     var idCard = $(this).val().trim();
+            //     if (idCard.length > 0 && idCard.length !== 18) {
+            //         alert("身份证号必须为18位！");
+            //         $(this).focus();
+            //     }
+            // });
+
+            // // 手机号格式验证
+            // $('input[name="Phone"]').blur(function() {
+            //     var phone = $(this).val().trim();
+            //     var reg = /^1[3-9]\d{9}$/;
+            //     if (phone.length > 0 && !reg.test(phone)) {
+            //         alert("请输入有效的11位手机号码！");
+            //         $(this).focus();
+            //     }
+            // });
+
+            // 表单提交前验证
+            $('form').submit(function() {
+                // 检查必填项
+                var requiredFields = $('[required]');
+                for (var i = 0; i < requiredFields.length; i++) {
+                    if (!$(requiredFields[i]).val()) {
+                        alert("标有 * 的字段为必填项，请完整填写！");
+                        $(requiredFields[i]).focus();
+                        return false;
+                    }
+                }
+                return confirm("确认提交患者注册信息吗？提交后将无法修改核心信息！");
+            });
+        });
+    </script>
+}

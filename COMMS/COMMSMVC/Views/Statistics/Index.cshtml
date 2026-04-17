@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "控制台";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+    }
+
+    .dashboard-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .card-btn {
+        display: block;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+        text-align: center;
+        text-decoration: none;
+        color: #333;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .card-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: #0d6efd;
+        }
+
+    .card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #0d6efd;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-desc {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="dashboard-container">
+    <h2 class="dashboard-title">功能快捷入口</h2>
+    <div class="card-grid">
+    @*     <!-- 患者管理 -->
+        <a asp-controller="Patient" asp-action="GetAllPatientsIndex" class="card-btn">
+            <div class="card-icon">👥</div>
+            <div class="card-title">患者管理</div>
+            <div class="card-desc">查看、新增、编辑患者信息</div>
+        </a>
+        <!-- 药品管理 -->
+        <a asp-controller="Medication" asp-action="Index" class="card-btn">
+            <div class="card-icon">💊</div>
+            <div class="card-title">药品管理</div>
+            <div class="card-desc">药品库存、价格维护</div>
+        </a>
+        <!-- 预约挂号 -->
+        <a asp-controller="Appointment" asp-action="Index" class="card-btn">
+            <div class="card-icon">📅</div>
+            <div class="card-title">预约挂号</div>
+            <div class="card-desc">患者预约、排班管理</div>
+        </a>
+        <!-- 病历记录 -->
+        <a asp-controller="MedicalRecord" asp-action="GetPatientMedicalRecordById" class="card-btn">
+            <div class="card-icon">📋</div>
+            <div class="card-title">病历记录</div>
+            <div class="card-desc">患者病史、诊断记录</div>
+        </a>
+        <!-- 检查单 -->
+        <a asp-controller="CheckOrder" asp-action="CheckOrdersIndex" class="card-btn">
+            <div class="card-icon">🔬</div>
+            <div class="card-title">检查单管理</div>
+            <div class="card-desc">开单、结果录入</div>
+        </a>
+        <!-- 支付记录 -->
+        <a asp-controller="Payment" asp-action="Index" class="card-btn">
+            <div class="card-icon">💰</div>
+            <div class="card-title">支付记录</div>
+            <div class="card-desc">收费、退款记录</div>
+        </a>
+        <!-- 发药管理 -->
+        <a asp-controller="Pharmacy" asp-action="CheckDispenseMedication" class="card-btn">
+            <div class="card-icon">💊📦</div>
+            <div class="card-title">发药管理</div>
+            <div class="card-desc">待发药清单、库存扣减</div>
+        </a> *@
+        <!-- 药品统计图 -->
+        <a asp-controller="Statistics" asp-action="MedicationStatistics" class="card-btn">
+            <div class="card-icon">📊</div>
+            <div class="card-title">药品统计图</div>
+            <div class="card-desc">库存与价格图表</div>
+        </a>
+    </div>
+</div>

@@ -1,0 +1,134 @@
+﻿@model List<COMMSMVC.Models.GetMyMedicalRecordModel>
+@{
+    ViewData["Title"] = "所有患者病历记录";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .table-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .badge-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-secondary {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="table-container">
+    <h2 class="page-title">所有患者病历记录</h2>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="no-data">暂无病历记录。</div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>记录ID</th>
+                    <th>预约ID</th>
+                    <th>患者姓名</th>
+                    <th>主诉</th>
+                    <th>诊断</th>
+                    <th>治疗方案</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.RecordID</td>
+                        <td>@item.AppointmentID</td>
+                        <td>@item.PatientName</td>
+                        <td>@(item.PatientStatement ?? "-")</td>
+                        <td>@(item.Diagnosis ?? "-")</td>
+                        <td>@(item.Treatment ?? "-")</td>
+                        <td>
+                            @{
+                                string badgeClass = "badge-secondary";
+                                if (item.Status == "已完成") badgeClass = "badge-success";
+                                else if (item.Status == "进行中") badgeClass = "badge-warning";
+                                else if (item.Status == "待复诊") badgeClass = "badge-info";
+                            }
+                            <span class="badge @badgeClass">@(item.Status ?? "-")</span>
+                        </td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                        <td>
+                            <a asp-action="GetPatientById" asp-route-id="@item.AppointmentID" class="btn-back" style="margin-top:0;">查看患者信息</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
